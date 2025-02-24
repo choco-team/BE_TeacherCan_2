@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, JoinColumn, Generated } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, JoinColumn, Generated, OneToMany } from "typeorm";
 import { Subject } from "./subject.entity"; // subjects 테이블이 존재한다고 가정
 import { answerInterface, correctAnswerType } from "src/dto/question.dto";
 
@@ -35,4 +35,9 @@ export class Question {
 
     @Column("json")
     correct_answer: correctAnswerType[];
+
+      // ✅ One-to-Many 관계: 한 유저가 여러 답안을 가질 수 있음
+      @OneToMany(() => Subject, (studentAnswer) => studentAnswer.questions)
+      studentAnswer: Subject[];
+
 }

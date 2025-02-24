@@ -1,5 +1,6 @@
 import { Request } from 'express';
-import { User, UserRole } from '../db/entities/user.entity';
+import { User } from '../db/entities/user.entity';
+import { UserRole } from 'src/dto/user.dto';
 
 export interface AuthRequest extends Request {
   sessionId: string

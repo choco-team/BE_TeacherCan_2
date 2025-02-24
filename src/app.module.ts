@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
 import { RolesGuard } from './auth/role.guard';
+import { StudentModule } from './student/student.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RolesGuard } from './auth/role.guard';
     ConfigModule.forRoot({
       isGlobal: true, // ✅ 전역 사용 가능하도록 설정
     }),
+    StudentModule,
   ],
   providers: [
     {

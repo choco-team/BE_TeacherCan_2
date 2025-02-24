@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -91,4 +91,10 @@ export class AuthService {
   
       return session.user; // ✅ 유저 정보 반환
     }
+
+    async logout(userId){
+      const session = await this.sessionRepository.delete({userId})
+      if (session.affected===0)
+      {throw new HttpException("서버 오류가 발생하였습니다", HttpStatus.INTERNAL_SERVER_ERROR)}
+      }
   }

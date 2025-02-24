@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { Roles } from 'src/decorator/roles.decorator';
 import { UserDecorator } from 'src/decorator/user.decorator';
@@ -36,5 +36,17 @@ export class QuestionController {
       @Get("/answer")
       async getAnswerPage(@Query("id") id:string, @Query("session") session:string){
         return await this.questionService.getAnswerPage(id,session)
+      }
+
+      @Delete()
+      @Roles("user")
+      async deleteQuestionOnDB(@Body("id") id:number, @UserDecorator("id") userId:number){
+        return await this.questionService.deleteQuestionOnDB(id,userId)
+      }
+
+      @Get("/edit/:id")
+      @Roles("user")
+      async getQuestionDataForEdit(@Param("id") id:number, @UserDecorator("id") userId:number){
+        return await this.questionService.getQuestionDataForEdit(id,userId)
       }
 }

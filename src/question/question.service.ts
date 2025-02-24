@@ -125,6 +125,27 @@ export class QuestionService {
         return {title:question.title, answerSheet:question.answer_sheets} 
       }
 
-
-
+      async deleteQuestionOnDB(id, userId){
+        const question = await this.questionRepository.findOne({where:{id}, relations:["subjects"]});
+        if (question.subjects.userId!==userId){
+            throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN)
+        }
+       return await this.questionRepository.delete({id})
+      }     
+      async getQuestionDataForEdit(id, userId){
+        const question = await this.questionRepository.findOne({where:{id}, relations:["subjects"]});
+        if (question.subjects.userId!==userId){
+            throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN)
+        }
+        const questionData = {
+            title: question.title,
+            content: question.content,
+            comment: question.comment,
+            subjectName: question.subjects.name,
+            answerSheet: question.answer_sheets,
+            correctAnswer: question.correct_answer,
+            id: question.id
+        }
+        return questionData        
+      }
             }
