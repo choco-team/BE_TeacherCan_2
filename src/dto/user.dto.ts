@@ -8,3 +8,4 @@ export interface studentInterface{
   name: string,
   number: number
 }
+

@@ -23,4 +23,7 @@ export class StudentAnswer {
     @ManyToOne(() => User, user => user.studentAnswer, { onDelete: "CASCADE" })
     @JoinColumn({ name: "userId" })
     user: User;
+
+    @Column()
+    userId: number;  
 }

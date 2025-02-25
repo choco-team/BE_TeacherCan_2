@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
 import { RolesGuard } from './auth/role.guard';
 import { StudentModule } from './student/student.module';
+import { LlmModule } from './llm/llm.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { StudentModule } from './student/student.module';
       isGlobal: true, // ✅ 전역 사용 가능하도록 설정
     }),
     StudentModule,
+    LlmModule,
   ],
   providers: [
     {
