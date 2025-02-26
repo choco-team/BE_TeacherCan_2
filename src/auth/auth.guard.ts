@@ -16,7 +16,7 @@ export class AuthGuard implements CanActivate {
     if (!sessionId) {
       console.log("❌ 세션 ID 없음");
       // ⬇️ request.user에 기본값 설정
-      request.user = { id: null, provider: 'guest', oauthId: '', createdAt: new Date(), role: UserRole.GUEST, sessions: null, subjects: null, studentInfo:null, studentAnswer:null};
+      request.user = { id: null, provider: 'guest', oauthId: '', createdAt: new Date(), role: UserRole.GUEST, sessions: null, subjects: null, studentInfo:null, studentAnswer:null, remainingTokens:0};
       return true;
     }
 
@@ -25,7 +25,7 @@ export class AuthGuard implements CanActivate {
       console.log("❌ 유효하지 않은 세션");
 
       // ⬇️ 유효하지 않은 경우에도 기본값 설정
-      request.user = { id: null, provider: 'guest', oauthId: '', createdAt: new Date(), role: UserRole.GUEST, sessions: null, subjects: null, studentInfo:null, studentAnswer:null};
+      request.user = { id: null, provider: 'guest', oauthId: '', createdAt: new Date(), role: UserRole.GUEST, sessions: null, subjects: null, studentInfo:null, studentAnswer:null,  remainingTokens:0};
       return true;
     }
 

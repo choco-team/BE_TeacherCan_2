@@ -13,12 +13,12 @@ export class StudentAnswer {
     @Column({ type: "json", nullable: true })
     answer: any;
 
+    @Column()
+    questionId: number;
+
     @ManyToOne(() => Question, question => question.studentAnswer, { onDelete: "CASCADE" })
     @JoinColumn({ name: "questionId" })
     question: Question;
-
-    @Column({ type: "varchar", length: 255, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", nullable: false })
-    studentName: string;
 
     @ManyToOne(() => User, user => user.studentAnswer, { onDelete: "CASCADE" })
     @JoinColumn({ name: "userId" })

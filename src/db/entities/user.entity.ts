@@ -24,6 +24,9 @@ export class User {
   @Column({type: "json"})
   studentInfo: studentInterface[];
 
+  @Column()
+  remainingTokens: number;
+
   @OneToMany(() => Session, (session) => session.user, { cascade: true }) // ✅ 유저가 삭제되면 세션도 삭제됨
   sessions: Session[];
 
