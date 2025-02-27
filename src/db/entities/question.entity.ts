@@ -23,7 +23,7 @@ export class Question {
     @Column("text", { nullable: true })
     comment?: string;
 
-    @CreateDateColumn({ type: "datetime" })
+    @CreateDateColumn({ type: 'timestamp', nullable: false })
     createdAt: Date;
 
     @Column({ type: "uuid", unique: true })

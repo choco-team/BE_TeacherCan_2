@@ -20,6 +20,6 @@ export class TokenUsage {
     @Column()
     model: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ type: 'timestamp', nullable: false })
     createdAt: Date;
 }

@@ -12,7 +12,7 @@ export class User {
   @Column({ type: 'varchar', length: 255, unique: true })
   oauthId: string;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }) // ✅ 자동 생성
+  @CreateDateColumn({ type: 'timestamp', nullable: false })
   createdAt: Date;
 
   @Column({ type: 'enum', enum: ['kakao', 'local', 'guest'] })
