@@ -1,8 +1,7 @@
-import { Get, HttpException, HttpStatus, Injectable, Post } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Post } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Session } from 'src/db/entities/session.entity';
 import { User } from 'src/db/entities/user.entity';
-import { Roles } from 'src/decorator/roles.decorator';
 import { studentInterface } from 'src/dto/user.dto';
 import { Repository } from 'typeorm';
 import { studentAnswerDto } from './student.controller';
@@ -87,23 +86,17 @@ export class StudentService {
                     );
                 }
         
-                let studentAnswer = await this.studentAnswerRepository.findOne({
-                    where: { studentNumber: body.student, userId: sessionData.userId, questionId:question.id}
-                });
-        
-                // ✅ studentAnswer가 없으면 새로 생성하고 변수에 할당
-                if (!studentAnswer) {
-                    studentAnswer = this.studentAnswerRepository.create({
+                await this.studentAnswerRepository.upsert(
+                    {
                         studentNumber: body.student,
                         userId: sessionData.userId,
                         questionId: question.id,
-                        answer: body.answer // 처음부터 answer 추가
-                    });
-                } else {
-                    studentAnswer.answer = body.answer;
-                }
-        
-                await this.studentAnswerRepository.save(studentAnswer);
+                        answer: body.answer
+                    },
+                    ["studentNumber", "userId", "questionId"] // 🔥 기존 데이터와 비교할 키
+                );
+                
+
             } catch (error) {
                 if (error instanceof HttpException) {
                     throw error;

@@ -17,3 +17,10 @@ export interface questionDataDto {
     correctAnswer: correctAnswerType[];
     id?: number;
 }
+
+export interface studentAnswerDataDto{
+    studentNumber: number,
+    questionId: number,
+    maxLength: number,
+    isLastQuesiotn: boolean
+}

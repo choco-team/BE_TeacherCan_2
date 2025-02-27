@@ -87,16 +87,28 @@ async makeQuestionPrompt(questionId:number, sessionId:string){
 }
 
 
-    async makeStudentPrompt(studentNumber:number, sessionId:string){
+    async makeStudentPrompt(sessionId, userId, studentNumber, questionId, maxLength, isLastQuesiotn){
         try{
-            const sessionData = await this.sessionRepository.findOne({where:{id:sessionId}})
-            const studentAnswer = await this.studentAnswerRepository.findOne({where:{studentNumber:studentNumber, userId: sessionData.userId }})
+            
+            const question = await this.questionRepository.findOne({where:{id:questionId}})
+            const studentAnswer = await this.studentAnswerRepository.findOne({where:{studentNumber:studentNumber, userId }})
             return `사용자 세션: ${sessionId}
-                    아까 준 문항과 이 학생의 답안을 참고해서 교과 학습 발달 상황을 작성해줘
-                    반드시 학생이 알고 있는 학습주제에 대한 학생의 학습 상태 평가문만 작성하고 문장 종결어미는 반드시 ~함, ~임으로 끝내줘
-                    알려준 답변의 길이를 최대한 가깝게 20% 내외로 꼭 지켜줘
+            학생의 교과 학습 발달 상황을 작성해줘!
+            너가 할 일은 문제 파일과 학생의 답안을 보고 학생에 대해 평가글을 작성하는 것이야
+            예를 들어 수학 문제에서 3+5를 맞춘 학생이면 '받아올림이 없는 한자리수의 덧셈 계산을 정확히 수행함',
+            사회 문제에서 지방자치단체장에 관한 문제를 맞추면 '우리나라의 지방자치단체장의 역할을 정확히 말함.' 등을 적어서 학생에 대한 교과학습 발달상황을 작성하는 것이야
+            답안은 배열로 제공될 것이고 배열 순서대로 문항에 대한 답을 적었다고 생각하면 돼
 
-                    학생 ${studentNumber} 답안: ${JSON.stringify(studentAnswer.answer) || null}`
+            다음을 꼭 지켜줘
+            ${isLastQuesiotn==="false" ? "지금은 내용만 정확히 기억만 하고 절대 아무것도 답장하지 말 것" :
+            `지금은 이 학생의 마지막 문항이므로 평가문을 응답할 것
+            제공된 문제와 답안을 읽고 기억한 후, 배열로 주어진 학생의 답안을 기반으로 교과 학습 발달 상황을 작성할 것
+            모든 문장은 "~함", "~임"으로 끝나도록 작성할 것
+            평가문과 관련 없는 내용은 일절 하지 말 것
+            평가는 ${maxLength}자 내외로 작성해줘`}
+            문항 : ${question.content}
+            정답 풀이 ${question.correct_answer || "미입력했으므로 문제를 보고 알아서 정답을 염두에 둘 것"}
+            학생 번호 ${studentNumber} 답안: ${JSON.stringify(studentAnswer.answer) || null}`
         } catch(error){
             throw new HttpException("서버 에러입니다", HttpStatus.INTERNAL_SERVER_ERROR)    
         }
