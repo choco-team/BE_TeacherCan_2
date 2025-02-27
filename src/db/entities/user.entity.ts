@@ -21,10 +21,10 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER }) // ✅ 기본값 USER
   role: UserRole;
 
-  @Column({type: "json"})
+  @Column({type: "json", nullable: true, default:null})
   studentInfo: studentInterface[];
 
-  @Column()
+  @Column({default:0})
   remainingTokens: number;
 
   @OneToMany(() => Session, (session) => session.user, { cascade: true }) // ✅ 유저가 삭제되면 세션도 삭제됨
