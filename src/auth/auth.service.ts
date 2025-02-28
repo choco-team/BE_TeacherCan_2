@@ -63,7 +63,7 @@ export class AuthService {
     let user = await this.userRepository.findOne({ where: { oauthId, provider: "kakao" } });
 
     if (!user) {
-      user = this.userRepository.create({ oauthId, provider: 'kakao' });
+      user = this.userRepository.create({ oauthId, provider: 'kakao', studentInfo: [] });
       await this.userRepository.save(user);
     }
 
