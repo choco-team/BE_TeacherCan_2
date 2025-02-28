@@ -7,10 +7,12 @@ import { Session } from 'src/db/entities/session.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
 import { User } from 'src/db/entities/user.entity';
+import { CryptoService } from 'src/services/crypto.service';
+import { RsaKey } from 'src/db/entities/rsaKey.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, TokenUsage, Question, Session, StudentAnswer])],
-  controllers: [LlmController],
-  providers: [LlmService]
+  imports: [TypeOrmModule.forFeature([User, TokenUsage, Question, Session, StudentAnswer, RsaKey])],
+  controllers: [LlmController ],
+  providers: [LlmService, CryptoService]
 })
 export class LlmModule {}

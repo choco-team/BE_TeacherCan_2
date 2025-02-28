@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { User } from '../db/entities/user.entity';
 import { AxiosResponse } from 'axios';
 import { Session } from 'src/db/entities/session.entity';
+import { CryptoService } from '../services/crypto.service';
+import * as crypto from "crypto";
 
 @Injectable()
 export class AuthService {
@@ -16,9 +18,12 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
 
     @InjectRepository(Session)
-    private readonly sessionRepository: Repository<Session>,
+    private readonly sessionRepository: Repository<Session>,    
 
     private readonly httpService: HttpService, // ✅ HTTP 요청을 위한 HttpService
+    private readonly cryptoService: CryptoService, // ✅ CryptoService 주입
+
+    
   ) {}
 
   // 1️⃣ 카카오 API에서 액세스 토큰 가져오기
@@ -56,20 +61,29 @@ export class AuthService {
     }
   }
 
-  // 3️⃣ 사용자 정보를 DB에서 확인하고 저장
+
   async validateKakaoUser(kakaoUser: any) {
     const { id: oauthId } = kakaoUser; // ✅ 카카오 사용자 고유 ID
+    const hashedOauthId = crypto.createHash('sha256').update(oauthId.toString()).digest('hex');
 
-    let user = await this.userRepository.findOne({ where: { oauthId, provider: "kakao" } });
+    let user = await this.userRepository.findOne({ 
+        where: { provider: "kakao", oauthIdHash: hashedOauthId } 
+    });
 
     if (!user) {
-      user = this.userRepository.create({ oauthId, provider: 'kakao', studentInfo: [] });
-      await this.userRepository.save(user);
+        user = new User();
+        user.oauthIdHash = hashedOauthId; // ✅ 직접 설정
+        user.encryptedOauthId = this.cryptoService.encryptAES(oauthId.toString()).encryptedData; // ✅ 직접 설정
+        user.provider = 'kakao';
+        user.encryptedStudentInfo = this.cryptoService.encryptAES([].toString()).encryptedData;
+
+        await this.userRepository.save(user);
     }
 
     return user;
-  }
-  // ✅ 세션을 생성하고 id를 반환
+}
+  
+// ✅ 세션을 생성하고 id를 반환
   async setSession(user: User): Promise<string> {
     await this.sessionRepository.delete({user})
     const session = this.sessionRepository.create({ user });

@@ -4,9 +4,20 @@ import { join } from "path";
 import * as express from "express";
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
+import { CryptoService } from "./services/crypto.service";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+    // 🔹 CryptoService 가져오기
+    const cryptoService = app.get(CryptoService);
+
+    // 🔹 서버 부팅 시 RSA 및 AES 키 생성 실행
+    await cryptoService.ensureRSAKeyExists();
+    await cryptoService.generateAndEncryptAESKey();
+
+
+
 
   // ✅ 정적 파일 서빙
   app.use(express.static(join(process.cwd(), "front")));

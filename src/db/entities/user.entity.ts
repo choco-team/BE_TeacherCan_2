@@ -3,14 +3,18 @@ import { Session } from './session.entity';
 import { Subject } from './subject.entity';
 import { studentInterface, UserRole } from 'src/dto/user.dto';
 
-
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
+  /** 🔹 SHA-256 해싱된 OAuth ID */
   @Column({ type: 'varchar', length: 255, unique: true })
-  oauthId: string;
+  oauthIdHash: string;
+
+  /** 🔹 AES 암호화된 OAuth ID */
+  @Column("text")
+  encryptedOauthId: string;
 
   @CreateDateColumn({ type: 'timestamp', nullable: false })
   createdAt: Date;
@@ -21,10 +25,11 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER }) // ✅ 기본값 USER
   role: UserRole;
 
-  @Column({type: "json", nullable: true, default:null})
-  studentInfo: studentInterface[];
+  /** 🔹 AES 암호화된 학생 정보 */
+  @Column("text", { nullable: true })
+  encryptedStudentInfo: string;
 
-  @Column({default:0})
+  @Column({ default: 0 })
   remainingTokens: number;
 
   @OneToMany(() => Session, (session) => session.user, { cascade: true }) // ✅ 유저가 삭제되면 세션도 삭제됨

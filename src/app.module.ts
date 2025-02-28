@@ -12,10 +12,17 @@ import { AuthGuard } from './auth/auth.guard';
 import { RolesGuard } from './auth/role.guard';
 import { StudentModule } from './student/student.module';
 import { LlmModule } from './llm/llm.module';
+import { RsaKey } from './db/entities/rsaKey.entity';
+import { Question } from './db/entities/question.entity';
+import { StudentAnswer } from './db/entities/studentAnswer.entity';
+import { User } from './db/entities/user.entity';
+import { CryptoModule } from './services/crypto.module';
+import { CryptoService } from './services/crypto.service';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(AppDataSource.options), // AppDataSource 적용
+    TypeOrmModule.forFeature([RsaKey, Question, StudentAnswer, User]),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'front'),
       serveRoot: '/', // ✅ 루트 경로에서 정적 파일 서빙
@@ -30,7 +37,7 @@ import { LlmModule } from './llm/llm.module';
     StudentModule,
     LlmModule,
   ],
-  providers: [
+  providers: [CryptoModule,CryptoService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard, // ✅ `AuthGuard`가 `AuthModule`에서 해결 가능

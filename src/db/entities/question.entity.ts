@@ -1,27 +1,28 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, Index, JoinColumn, Generated, OneToMany } from "typeorm";
-import { Subject } from "./subject.entity"; // subjects 테이블이 존재한다고 가정
-import { answerInterface, correctAnswerType } from "src/dto/question.dto";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Generated } from "typeorm";
+import { Subject } from "./subject.entity"; // 🔹 FK 관계 대상 테이블
 
 @Entity("questions")
 export class Question {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => Subject, (subject) => subject.questions, { onDelete: "CASCADE" }) // 외래키 관계
-    @JoinColumn({ name: "subjectsId" })
-    subjects: Subject
+    /** 🔹 FK 관계 (Many-to-One) */
+    @ManyToOne(() => Subject, (subject) => subject.questions, { onDelete: "CASCADE", eager: true }) 
+    @JoinColumn({ name: "subjectsId" }) // 🔹 FK 컬럼과 매핑
+    subjects: Subject;
 
-    @Column()
+    /** 🔹 FK ID 컬럼 (DB에서 직접 참조 가능) */
+    @Column({ type: "int" })
     subjectsId: number;
 
     @Column({ length: 255 })
     title: string;
 
     @Column("text")
-    content: string;
+    encryptedContent: string; // 🔹 암호화된 본문
 
     @Column("text", { nullable: true })
-    comment?: string;
+    encryptedComment?: string; // 🔹 암호화된 해설
 
     @CreateDateColumn({ type: 'timestamp', nullable: false })
     createdAt: Date;
@@ -30,14 +31,9 @@ export class Question {
     @Generated('uuid')
     uuid: string;
 
-    @Column("json")
-    answer_sheets: answerInterface[];
+    @Column("text")
+    encryptedAnswerSheets: string; // 🔹 암호화된 답안지
 
-    @Column("json")
-    correct_answer: correctAnswerType[];
-
-      // ✅ One-to-Many 관계: 한 유저가 여러 답안을 가질 수 있음
-      @OneToMany(() => Subject, (studentAnswer) => studentAnswer.questions)
-      studentAnswer: Subject[];
-
+    @Column("text")
+    encryptedCorrectAnswer: string; // 🔹 암호화된 정답
 }

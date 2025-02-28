@@ -11,14 +11,18 @@ import { HttpModule } from '@nestjs/axios';
 import { Session } from 'src/db/entities/session.entity';
 import { AuthGuard } from './auth.guard';
 import { RolesGuard } from './role.guard';
+import { CryptoModule } from 'src/services/crypto.module';
+import { CryptoService } from 'src/services/crypto.service';
+import { RsaKey } from 'src/db/entities/rsaKey.entity';
 
 @Module({
-  imports: [ TypeOrmModule.forFeature([User, Session]),
+  imports: [ TypeOrmModule.forFeature([User, Session, RsaKey]),
   PassportModule.register({ session: true }),
   UserModule,
+  CryptoModule,
   HttpModule],
   controllers: [AuthController],
-  providers: [KakaoStrategy, SessionSerializer, AuthService, AuthGuard, RolesGuard],
+  providers: [KakaoStrategy, SessionSerializer, CryptoService, AuthService, AuthGuard, RolesGuard],
   exports: [AuthGuard, RolesGuard, AuthService]
 })
 export class AuthModule {}
