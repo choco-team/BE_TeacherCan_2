@@ -27,7 +27,7 @@ export class QuestionService {
     ){}
 
     async postQuestionOnDB(body:questionDataDto,userId:number){
-        let question
+        let question:Question
         if (body.id){
             question = await this.questionRepository.findOne({where:{id:body.id}})
            const subjectInfo = await this.subjectRepository.findOne({where:{userId,name:body.subjectName}})
@@ -42,12 +42,18 @@ export class QuestionService {
                }
                 question.subjectsId = subjectInfo.id
         }
-        question.title = body.title
-        question.content = body.content
-        question.comment = body.comment
-        question.correct_answer = body.correctAnswer
-        question.answer_sheets = body.answerSheet
-
+        const content = this.cryptoService.encryptAES(body.content)
+        const comment = this.cryptoService.encryptAES(body.comment)
+        const answerSheet = this.cryptoService.encryptAES(JSON.stringify(body.answerSheet))
+        const correctAnswer = this.cryptoService.encryptAES(JSON.stringify(body.correctAnswer))
+        question.encryptedContent = content.encryptedData        
+        question.ivContentId = content.iv
+        question.encryptedComment = comment.encryptedData        
+        question.ivCommentId = comment.iv
+        question.encryptedAnswerSheets = answerSheet.encryptedData        
+        question.ivAnswerSheets = answerSheet.iv
+        question.encryptedCorrectAnswer = correctAnswer.encryptedData        
+        question.ivCorrectAnswer = correctAnswer.iv
         await this.questionRepository.save(question);
     }
 
@@ -146,7 +152,7 @@ async getAnswerPage(token: string) {
         }
 
         // ✅ JWT 검증 및 타입 지정
-        const verifyToken = jwt.verify(token, jwtSecret) as { question: string; user: number };
+        const verifyToken = jwt.verify(token, jwtSecret) as { question: string; user: number, iat:number, exp:number };
 
         const question = await this.questionRepository.findOne({
             where: { uuid: verifyToken.question },
@@ -170,7 +176,7 @@ async getAnswerPage(token: string) {
         return { title: question.title, answerSheet };
     } catch (error) {
         console.error("JWT 검증 오류:", error);
-        throw new HttpException("토큰 검증 실패", HttpStatus.UNAUTHORIZED);
+        throw new HttpException("토큰 검증 실패", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
 
