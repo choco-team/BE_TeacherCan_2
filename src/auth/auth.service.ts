@@ -80,6 +80,7 @@ export class AuthService {
         const studentInfo = this.cryptoService.encryptAES(JSON.stringify([]));
         user.encryptedStudentInfo = studentInfo.encryptedData
         user.ivStudentInfo = studentInfo.iv
+        user.remainingTokens = 1000000 // 테스트가입 토큰 100만 기본 지급
 
         await this.userRepository.save(user);
     }
