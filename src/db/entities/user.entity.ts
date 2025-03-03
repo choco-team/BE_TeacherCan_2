@@ -16,6 +16,9 @@ export class User {
   @Column("text")
   encryptedOauthId: string;
 
+  @Column({type:"varchar", length:255})
+  ivOauthId: string;
+
   @CreateDateColumn({ type: 'timestamp', nullable: false })
   createdAt: Date;
 
@@ -28,6 +31,9 @@ export class User {
   /** 🔹 AES 암호화된 학생 정보 */
   @Column("text", { nullable: true })
   encryptedStudentInfo: string;
+
+  @Column({type:"varchar", length:255})
+  ivStudentInfo: string;
 
   @Column({ default: 0 })
   remainingTokens: number;

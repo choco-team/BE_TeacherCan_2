@@ -73,9 +73,13 @@ export class AuthService {
     if (!user) {
         user = new User();
         user.oauthIdHash = hashedOauthId; // ✅ 직접 설정
-        user.encryptedOauthId = this.cryptoService.encryptAES(oauthId.toString()).encryptedData; // ✅ 직접 설정
+        const oauthIdData = this.cryptoService.encryptAES(oauthId.toString()); // ✅ 직접 설정
+        user.encryptedOauthId = oauthIdData.encryptedData
+        user.ivOauthId = oauthIdData.iv
         user.provider = 'kakao';
-        user.encryptedStudentInfo = this.cryptoService.encryptAES([].toString()).encryptedData;
+        const studentInfo = this.cryptoService.encryptAES(JSON.stringify([]));
+        user.encryptedStudentInfo = studentInfo.encryptedData
+        user.ivStudentInfo = studentInfo.iv
 
         await this.userRepository.save(user);
     }

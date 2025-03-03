@@ -56,8 +56,8 @@ export class LlmService {
             }
 
             // 내용과 정답을 복호화
-            const decryptedContent = this.cryptoService.decryptAES(question.encryptedContent, '');
-            const decryptedCorrectAnswer = this.cryptoService.decryptAES(question.encryptedCorrectAnswer, '');
+            const decryptedContent = this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId);
+            const decryptedCorrectAnswer = this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer);
 
             return `사용자 세션: ${sessionId}
                     아까 작성해달라고 한 교과 학습 발달 상황 문항이야.
@@ -76,7 +76,7 @@ export class LlmService {
             const studentAnswer = await this.studentAnswerRepository.findOne({ where: { studentNumber: studentNumber, userId } });
 
             // 답안 복호화
-            const decryptedAnswer = studentAnswer ? this.cryptoService.decryptAES(studentAnswer.encryptedAnswer, '') : '';
+            const decryptedAnswer = studentAnswer ? this.cryptoService.decryptAES(studentAnswer.encryptedAnswer, studentAnswer.ivAnswer) : '';
 
             return `사용자 세션: ${sessionId}
                     학생의 교과 학습 발달 상황을 작성해줘!

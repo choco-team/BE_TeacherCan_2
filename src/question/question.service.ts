@@ -7,6 +7,7 @@ import { questionDataDto } from 'src/dto/question.dto';
 import { Repository } from 'typeorm'
 import { ConfigService } from '@nestjs/config';
 import { CryptoService } from 'src/services/crypto.service';
+import * as jwt from "jsonwebtoken";
 
 @Injectable()
 export class QuestionService {
@@ -69,10 +70,10 @@ export class QuestionService {
             id: question.id,
             title: question.title,
             subjectName: question.subjects.name,
-            comment: question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, '') : null,
-            content: question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, '') : null,
-            correctAnswer: question.encryptedCorrectAnswer ? JSON.parse(this.cryptoService.decryptAES(question.encryptedCorrectAnswer, '')) : null,
-            answerSheet: question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, '')) : null,
+            comment: question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null,
+            content: question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null,
+            correctAnswer: question.encryptedCorrectAnswer ? JSON.parse(this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null,
+            answerSheet: question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null,
         };
     
         return questionInfo;
@@ -106,36 +107,74 @@ export class QuestionService {
     }
 
 
-    //**학생 인증은 jwt 발급 방식으로 바꾸어야함 */
-    async getQuestionQRcode(id, userId){
-        const question = await this.questionRepository.findOne({where:{id}, relations:["subjects"]});
-        if (question.subjects.userId!==userId){
-            throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN)
+//**학생 인증은 JWT 발급 방식 */
+async getQuestionQRcode(id: number, userId: number) {
+    const question = await this.questionRepository.findOne({
+        where: { id },
+        relations: ["subjects"]
+    });
+
+    if (!question) {
+        throw new HttpException("질문을 찾을 수 없습니다", HttpStatus.NOT_FOUND);
+    }
+
+    if (question.subjects?.userId !== userId) {
+        throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN);
+    }
+
+    const jwtSecret = this.configService.get<string>("JWT_SECRET");
+    if (!jwtSecret) {
+        throw new Error("환경 변수가 설정되지 않았습니다.");
+    }
+
+    const token = jwt.sign(
+        { question: question.uuid, user: userId },
+        jwtSecret,
+        { expiresIn: "1h" }
+    );
+
+    return {
+        url: `${this.configService.get<string>("SITE_URL")}student?token=${token}`
+    };
+}
+
+async getAnswerPage(token: string) {
+    try {
+        const jwtSecret = this.configService.get<string>("JWT_SECRET");
+        if (!jwtSecret) {
+            throw new Error("환경 변수가 설정되지 않았습니다.");
         }
-        const session = await this.sessionRepository.findOne({
-            where: { userId }, 
-            order: { createdAt: "DESC" } // ✅ 최신 생성된 세션을 가져옴
+
+        // ✅ JWT 검증 및 타입 지정
+        const verifyToken = jwt.verify(token, jwtSecret) as { question: string; user: number };
+
+        const question = await this.questionRepository.findOne({
+            where: { uuid: verifyToken.question },
+            relations: ["subjects"]
         });
-        console.log(session)
-        if (!session)
-        { throw new HttpException("세션이 종료되었습니다. 다시 로그인해주세요", HttpStatus.UNAUTHORIZED)}
-            return {url: this.configService.get<string>("SITE_URL") + `student?id=${question.uuid}&session=${session.id}`}
-      }
-      
-      async getAnswerPage(id, session) {
-        const question = await this.questionRepository.findOne({ where: { uuid: id }, relations: ["subjects"] });
-        const sessionData = await this.sessionRepository.findOne({ where: { id: session } });
-    
-        // 권한 체크
-        if (question.subjects.userId !== sessionData.userId) {
+
+        if (!question) {
+            throw new HttpException("질문을 찾을 수 없습니다", HttpStatus.NOT_FOUND);
+        }
+
+        // ✅ 권한 체크 (question.subjects가 null일 가능성 대비)
+        if (!question.subjects || question.subjects.userId !== verifyToken.user) {
             throw new HttpException("허가되지 않은 접근입니다", HttpStatus.FORBIDDEN);
         }
-    
-        // 복호화 처리: 암호화된 필드 복호화
-        const answerSheet = question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, '')) : null;
-    
-        return { title: question.title, answerSheet: answerSheet };
+
+        // ✅ 복호화 처리
+        const answerSheet = question.encryptedAnswerSheets
+            ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets))
+            : null;
+
+        return { title: question.title, answerSheet };
+    } catch (error) {
+        console.error("JWT 검증 오류:", error);
+        throw new HttpException("토큰 검증 실패", HttpStatus.UNAUTHORIZED);
     }
+}
+
+
     
     async deleteQuestionOnDB(id, userId) {
         const question = await this.questionRepository.findOne({ where: { id }, relations: ["subjects"] });
@@ -158,10 +197,10 @@ export class QuestionService {
         }
     
         // 복호화 처리
-        const content = question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, '') : null;
-        const comment = question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, '') : null;
-        const answerSheet = question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, '')) : null;
-        const correctAnswer = question.encryptedCorrectAnswer ? JSON.parse(this.cryptoService.decryptAES(question.encryptedCorrectAnswer, '')) : null;
+        const content = question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
+        const comment = question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null;
+        const answerSheet = question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null;
+        const correctAnswer = question.encryptedCorrectAnswer ? JSON.parse(this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null;
     
         const questionData = {
             title: question.title,

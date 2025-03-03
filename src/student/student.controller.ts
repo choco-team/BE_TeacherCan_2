@@ -5,8 +5,7 @@ import { UserDecorator } from 'src/decorator/user.decorator';
 import { studentInterface } from 'src/dto/user.dto';
 
 export interface studentAnswerDto{
-    questionUuid: string,
-    session: string,
+    token: string,
     student: number,
     answer: string[]
 }
@@ -16,13 +15,14 @@ export class StudentController {
           constructor(private readonly studentService: StudentService) {}
  
 @Get()
+@Roles("user")
 async getStudentInfo(@UserDecorator("id") userId:number) {
     return this.studentService.getStudentInfo(userId)
 }
 
 @Get("/input")
-async getStudentInfoForInput(@Query("session") session:string) {
-    return this.studentService.getStudentInfoForInput(session)
+async getStudentInfoForInput(@Query("token") toekn:string) {
+    return this.studentService.getStudentInfoForInput(toekn)
 }
 
 

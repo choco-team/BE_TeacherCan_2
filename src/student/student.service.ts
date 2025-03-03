@@ -7,6 +7,8 @@ import { Question } from 'src/db/entities/question.entity';
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
 import { studentAnswerDto } from './student.controller';
 import { CryptoService } from 'src/services/crypto.service'; // 암호화 서비스 추가
+import { ConfigService } from '@nestjs/config';
+import * as jwt from "jsonwebtoken"
 
 @Injectable()
 export class StudentService {
@@ -24,6 +26,8 @@ export class StudentService {
         private readonly studentAnswerRepository: Repository<StudentAnswer>,
 
         private readonly cryptoService: CryptoService,  // 암호화 서비스 추가
+        private readonly configService: ConfigService
+        
     ) {}
 
     /** 🔹 학생 정보 가져오기 (복호화) */
@@ -35,7 +39,7 @@ export class StudentService {
         }
 
         // 학생 정보를 복호화
-        const decryptedStudentInfo = JSON.parse(this.cryptoService.decryptAES(user.encryptedStudentInfo, ''));
+        const decryptedStudentInfo = JSON.parse(this.cryptoService.decryptAES(user.encryptedStudentInfo, user.ivStudentInfo));
 
         return decryptedStudentInfo;
     }
@@ -52,44 +56,52 @@ export class StudentService {
         const user = await this.userRepository.findOne({ where: { id: userId } });
 
         // 학생 정보를 암호화하여 저장
-        const encryptedStudentInfo = this.cryptoService.encryptAES(JSON.stringify(data)).encryptedData;
-        user.encryptedStudentInfo = encryptedStudentInfo;
+        const encryptedStudentInfo = this.cryptoService.encryptAES(JSON.stringify(data));
+        user.encryptedStudentInfo = encryptedStudentInfo.encryptedData;
+        user.ivStudentInfo = encryptedStudentInfo.iv
 
         return await this.userRepository.save(user);
     }
 
-    /** 🔹 세션에 맞는 학생 정보 가져오기 */
-    async getStudentInfoForInput(session: string) {
-        const sessionData = await this.sessionRepository.findOne({ where: { id: session }, relations: ["users"] });
+    /** 🔹 토큰에 맞는 학생 정보 가져오기 */
+    async getStudentInfoForInput(token: string) {
 
-        if (!sessionData) {
-            throw new HttpException("허가되지 않은 접근입니다", HttpStatus.FORBIDDEN);
-        }
-
-        if (!sessionData.user.encryptedStudentInfo) {
-            throw new HttpException("등록된 학생정보가 없습니다", HttpStatus.NOT_FOUND);
-        }
+                const jwtSecret = this.configService.get<string>("JWT_SECRET");
+                if (!jwtSecret) {
+                    throw new Error("환경 변수가 설정되지 않았습니다.");
+                }
+        
+                // ✅ JWT 검증 및 타입 지정
+                const verifyToken = jwt.verify(token, jwtSecret) as { question: string; user: number };
+        
+                const question = await this.questionRepository.findOne({
+                    where: { uuid: verifyToken.question },
+                    relations: ["subjects"]
+                });
+        
+                const userData = await this.userRepository.findOne({where:{id:verifyToken.user}})
 
         // 학생 정보 복호화
-        const decryptedStudentInfo = JSON.parse(this.cryptoService.decryptAES(sessionData.user.encryptedStudentInfo, ''));
+        const StudentInfo = JSON.parse(this.cryptoService.decryptAES(userData.encryptedStudentInfo, userData.ivStudentInfo));
 
-        return decryptedStudentInfo;
+        return StudentInfo;
     }
 
     /** 🔹 학생 답안 제출 */
     async submitStudentAnswer(body: studentAnswerDto) {
         try {
-            const sessionData = await this.sessionRepository.findOne({ where: { id: body.session } });
 
-            if (!sessionData) {
-                throw new HttpException(
-                    "⛔ 선생님이 시험을 종료하였기 때문에 이 시험지를 제출할 수 없습니다.",
-                    HttpStatus.FORBIDDEN
-                );
+            
+            const jwtSecret = this.configService.get<string>("JWT_SECRET");
+            if (!jwtSecret) {
+                throw new Error("환경 변수가 설정되지 않았습니다.");
             }
-
+    
+            // ✅ JWT 검증 및 타입 지정
+            const verifyToken = jwt.verify(body.token, jwtSecret) as { question: string; user: number };
+    
             const question = await this.questionRepository.findOne({
-                where: { uuid: body.questionUuid },
+                where: { uuid: verifyToken.question },
                 relations: ["subjects"]
             });
 
@@ -100,23 +112,23 @@ export class StudentService {
                 );
             }
 
-            if (sessionData.userId !== question.subjects.userId) {
+            if (verifyToken.user !== question.subjects.userId) {
                 throw new HttpException(
                     "🚫 잘못된 시험지의 결과를 작성하였습니다.",
                     HttpStatus.NOT_ACCEPTABLE
                 );
             }
 
-            // 답안 복호화 (복호화 필요)
-            const decryptedAnswer = this.cryptoService.decryptAES(JSON.stringify(body.answer), JSON.stringify([]));
+            const answer = this.cryptoService.encryptAES(JSON.stringify(body.answer))
 
             // 학생 답안 저장
             await this.studentAnswerRepository.upsert(
                 {
                     studentNumber: body.student,
-                    userId: sessionData.userId,
+                    userId: verifyToken.user,
                     questionId: question.id,
-                    encryptedAnswer: this.cryptoService.encryptAES(decryptedAnswer).encryptedData,  // 암호화된 답안 저장
+                    encryptedAnswer: answer.encryptedData,  // 암호화된 답안 저장
+                    ivAnswer: answer.iv
                 },
                 ["studentNumber", "userId", "questionId"] // 🔥 기존 데이터와 비교할 키
             );
@@ -133,22 +145,4 @@ export class StudentService {
         }
     }
 
-    /** 🔹 학생 답안 가져오기 (복호화) */
-    async getStudentAnswerForQuestion(userId: number, questionId: number) {
-        const studentAnswer = await this.studentAnswerRepository.findOne({
-            where: { userId, questionId }
-        });
-
-        if (!studentAnswer) {
-            throw new HttpException("답안이 없습니다", HttpStatus.NOT_FOUND);
-        }
-
-        // 답안 복호화
-        const decryptedAnswer = this.cryptoService.decryptAES(studentAnswer.encryptedAnswer, '');
-
-        return {
-            studentNumber: studentAnswer.studentNumber,
-            decryptedAnswer,
-        };
-    }
 }

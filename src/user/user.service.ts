@@ -22,10 +22,13 @@ export class UserService {
     let user = await this.userRepository.findOne({ where: { oauthIdHash: hashedOauthId } });
 
     if (!user) {
+
+      const oauthId = this.cryptoService.encryptAES(kakaoId)
       // 사용자 없으면 생성
       user = this.userRepository.create({ 
         oauthIdHash: hashedOauthId,  // 해시된 ID 저장
-        encryptedOauthId: this.cryptoService.encryptAES(kakaoId).encryptedData,  // 암호화된 OAuth ID 저장
+        encryptedOauthId: oauthId.encryptedData,  // 암호화된 OAuth ID 저장
+        ivOauthId: oauthId.iv,
         provider: "kakao" 
       });
       await this.userRepository.save(user);

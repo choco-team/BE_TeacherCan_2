@@ -13,6 +13,9 @@ export class StudentAnswer {
     @Column("text", { nullable: true })
     encryptedAnswer: string; 
 
+    @Column({type:"varchar", length:255})
+    ivAnswer: string;  
+
     @Column()
     questionId: number;
 

@@ -21,8 +21,14 @@ export class Question {
     @Column("text")
     encryptedContent: string; // 🔹 암호화된 본문
 
+    @Column({type:"varchar", length:255})
+    ivContentId: string;  
+
     @Column("text", { nullable: true })
     encryptedComment?: string; // 🔹 암호화된 해설
+
+    @Column({type:"varchar", length:255})
+    ivCommentId: string;  
 
     @CreateDateColumn({ type: 'timestamp', nullable: false })
     createdAt: Date;
@@ -34,6 +40,14 @@ export class Question {
     @Column("text")
     encryptedAnswerSheets: string; // 🔹 암호화된 답안지
 
+    @Column({type:"varchar", length:255})
+    ivAnswerSheets: string;  
+
     @Column("text")
     encryptedCorrectAnswer: string; // 🔹 암호화된 정답
+
+    @Column({type:"varchar", length:255})
+    ivCorrectAnswer: string;
+  
+
 }

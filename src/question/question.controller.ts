@@ -34,8 +34,8 @@ export class QuestionController {
       }
 
       @Get("/answer")
-      async getAnswerPage(@Query("id") id:string, @Query("session") session:string){
-        return await this.questionService.getAnswerPage(id,session)
+      async getAnswerPage(@Query("token") token:string){
+        return await this.questionService.getAnswerPage(token)
       }
 
       @Delete()
