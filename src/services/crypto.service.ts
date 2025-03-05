@@ -26,7 +26,6 @@ export class CryptoService {
             where: {}, // 🔹 모든 데이터를 대상으로 정렬
             order: { createdAt: 'DESC' } // 🔹 가장 최신 키 조회
         });
-        
                 if (!existingKey) {
             if (!RSA_PRIVATE_KEY) {
                 throw new Error('RSA 비밀키가 환경변수에 없습니다.');

@@ -16,6 +16,11 @@ async function bootstrap() {
     await cryptoService.ensureRSAKeyExists();
     await cryptoService.generateAndEncryptAESKey();
 
+// CORS 설정하기
+app.enableCors({
+  origin: 'https://www.teachercan.com/',
+  credentials: true,
+});
 
 
 
