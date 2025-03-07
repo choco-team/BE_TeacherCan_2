@@ -162,7 +162,10 @@ async getAnswerPage(token: string) {
         }
     
         // 삭제 처리
-        return await this.questionRepository.delete({ id });
+       const DeleteResult = await this.questionRepository.delete({ id });
+        if (DeleteResult.affected===0){
+            throw new HttpException("문항을 찾을 수 없어 삭제에 실패하였습니다", HttpStatus.NOT_FOUND)
+        }
     }
     
     async getQuestionDataForEdit(id, userId) {

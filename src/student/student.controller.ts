@@ -17,7 +17,7 @@ export interface studentAnswerInterface{
 export class StudentController {
           constructor(private readonly studentService: StudentService) {}
 
-@ApiOperation({summary: '학생 명단 불러오기', description: '작성한 학생 명단을 조회합니다'})
+@ApiOperation({summary: '학생 명단 불러오기', description: '작성한 학생 명단을 조회합니다(세션id 쿠키 필수)'})
 @ApiResponse({description: "학생 명단을 가져옵니다", type: StudentInfoDto })
 @Get()
 @Roles("user")
@@ -32,7 +32,7 @@ async getStudentInfoForInput(@Query("token") toekn:string) {
     return this.studentService.getStudentInfoForInput(toekn)
 }
 
-@ApiOperation({summary: '학생 명단 저장', description: '작성한 학생 명단을 저장합니다'})
+@ApiOperation({summary: '학생 명단 저장', description: '작성한 학생 명단을 저장합니다(세션id 쿠키 필수)'})
 @ApiBody({description: "학생 번호 이름", type: StudentInfoDto})
 @Post()
 @Roles("user")

@@ -37,7 +37,7 @@ export class AuthController {
   }
 
   @Get()
-  @ApiOperation({summary: '로그인 확인요청', description: 'httpOnly 쿠키를 전송하여 로그인 여부를 확인하고 로그인시 계정 정보를 가져옵니다'})
+  @ApiOperation({summary: '로그인 확인요청', description: 'httpOnly 쿠키를 전송하여 로그인 여부를 확인하고 로그인시 계정 정보를 가져옵니다(세션id 쿠키 필수)'})
   @ApiResponse( {description: "계정 번호를 반환합니다", type:UserIdResponseDto } )
   @UseInterceptors(CookieInterceptor)
   async checkSession(@UserDecorator("id") userId : number){
