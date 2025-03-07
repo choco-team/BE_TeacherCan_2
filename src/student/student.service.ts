@@ -5,10 +5,11 @@ import { User } from 'src/db/entities/user.entity';
 import { Session } from 'src/db/entities/session.entity';
 import { Question } from 'src/db/entities/question.entity';
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
-import { studentAnswerDto } from './student.controller';
+import { studentAnswerInterface } from './student.controller';
 import { CryptoService } from 'src/services/crypto.service'; // 암호화 서비스 추가
 import { ConfigService } from '@nestjs/config';
 import * as jwt from "jsonwebtoken"
+import { studentInterface } from 'src/dto/user.dto';
 
 @Injectable()
 export class StudentService {
@@ -39,7 +40,7 @@ export class StudentService {
         }
 
         // 학생 정보를 복호화
-        const decryptedStudentInfo = JSON.parse(this.cryptoService.decryptAES(user.encryptedStudentInfo, user.ivStudentInfo));
+        const decryptedStudentInfo:studentInterface = JSON.parse(this.cryptoService.decryptAES(user.encryptedStudentInfo, user.ivStudentInfo));
 
         return decryptedStudentInfo;
     }
@@ -88,7 +89,7 @@ export class StudentService {
     }
 
     /** 🔹 학생 답안 제출 */
-    async submitStudentAnswer(body: studentAnswerDto) {
+    async submitStudentAnswer(body: studentAnswerInterface) {
         try {
 
             

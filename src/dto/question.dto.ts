@@ -18,7 +18,7 @@ export interface questionDataDto {
     id?: number;
 }
 
-export interface studentAnswerDataDto{
+export interface studentAnswerDataInterface{
     studentNumber: number,
     questionId: number,
     maxLength: number,

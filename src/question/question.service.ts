@@ -18,8 +18,6 @@ export class QuestionService {
         @InjectRepository(Subject)
         private readonly subjectRepository: Repository<Subject>,
 
-        @InjectRepository(Session)
-        private readonly sessionRepository: Repository<Session>,
 
         private readonly configService: ConfigService,
         private readonly cryptoService: CryptoService
@@ -57,33 +55,6 @@ export class QuestionService {
         await this.questionRepository.save(question);
     }
 
-    async getQuestionOnDB(id: number, userId: number) {
-        const question = await this.questionRepository.findOne({
-            where: { id },
-            relations: ["subjects"], // 과목 정보도 함께 가져오기
-        });
-    
-        if (!question) {
-            throw new HttpException("해당 질문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
-        }
-    
-        if (question.subjects?.userId !== userId) {
-            throw new HttpException("권한이 없습니다.", HttpStatus.FORBIDDEN);
-        }
-    
-        // 복호화 처리: 암호화된 필드들 복호화
-        const questionInfo: questionDataDto = {
-            id: question.id,
-            title: question.title,
-            subjectName: question.subjects.name,
-            comment: question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null,
-            content: question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null,
-            correctAnswer: question.encryptedCorrectAnswer ? JSON.parse(this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null,
-            answerSheet: question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null,
-        };
-    
-        return questionInfo;
-    }
     
     
     async getQuestionList(page: number, userId: number, subject: string | undefined) {
