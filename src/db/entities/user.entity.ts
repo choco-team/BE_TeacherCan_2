@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Session } from './session.entity';
 import { Subject } from './subject.entity';
-import { studentInterface, UserRole } from 'src/dto/user.dto';
+import { UserRole } from 'src/dto/user.dto';
 
 @Entity('users')
 export class User {

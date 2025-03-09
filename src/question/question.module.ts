@@ -5,12 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Subject } from 'src/db/entities/subject.entity';
 import { Question } from 'src/db/entities/question.entity';
 import { Session } from 'src/db/entities/session.entity';
-import { CryptoModule } from 'src/services/crypto.module';
 import { CryptoService } from 'src/services/crypto.service';
 import { RsaKey } from 'src/db/entities/rsaKey.entity';
+import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Session, Subject, Question, RsaKey])],
+  imports: [TypeOrmModule.forFeature([Session, Subject, Question, RsaKey, StudentAnswer])],
   controllers: [QuestionController],
   providers: [QuestionService, CryptoService]
 })

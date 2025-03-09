@@ -96,3 +96,32 @@ export class QuestionInfoResponseDto {
     @ApiProperty({example: process.env.SITE_URL + "&code=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzQxMzc0MDQ0LCJleHAiOjE3NDEzNzc2NDR9.fLpVyCx-VCWLAGg7snKNVMlqkE8OqoZ55G-V1PENk-E'", description: "jwt 토큰"})  
     url: string
   }
+
+  export class CheckStudentAnswerDto{
+    @ApiProperty({example: 1, description: "답장  고유ID"})
+    id: number;
+
+    @ApiProperty({example: "두 자리수의 덧셈 수행평가", description: "평가지 제목"})
+    title: string;
+
+    @ApiProperty({example: [{format: "select", counts: 5}, {format: "input"}], description: "답안 입력형식 기록"})
+    answerSheet: answerInterface[];
+
+    @ApiProperty({example: [2, "64마리"], description: "학생의 답안지"})
+    studentAnswer: correctAnswerType[]
+    
+    @ApiProperty({example: [2, "64마리"], description: "모범 답안"})
+    correctAnswer: correctAnswerType[]
+
+  }
+
+  export class StudentAnswerPerQuestionDto{
+    @ApiProperty({example: 1, description: "답장  고유ID"})
+    id: number;
+
+    @ApiProperty({example: 2, description: "학생 번호"})
+    studentNumber: number;
+
+    @ApiProperty({example: [2, "64마리"], description: "학생의 답안"})
+    studentAnswer: correctAnswerType[];
+  }

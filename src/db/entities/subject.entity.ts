@@ -19,6 +19,6 @@ export class Subject {
     user: User;
 
     // ✅ One-to-Many: subjects → questions (1:N 관계)
-    @OneToMany(() => Question, (question) => question.subjects)
+    @OneToMany(() => Question, (question) => question.subject)
     questions: Question[];
 }

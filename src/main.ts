@@ -29,10 +29,15 @@ if (process.env.LOCAL==="true"){
     .setTitle('API 문서') // 문서 제목
     .setDescription('API 설명') // 설명
     .setVersion('1.0') // 버전
+    .addCookieAuth('connect.sid')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+  SwaggerModule.setup('api-docs', app, document,{
+    swaggerOptions: {
+      withCredentials: true, // 쿠키 자동 전송 활성화
+    },
+    });
 }
 
 

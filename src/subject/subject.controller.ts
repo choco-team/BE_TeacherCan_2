@@ -4,7 +4,7 @@ import { SubjectService } from './subject.service';
 import { UserDecorator } from 'src/decorator/user.decorator';
 import { CreateSubjectDto, ModifySubjectDto } from '../dto/subject.dto';
 import { RolesGuard } from 'src/auth/role.guard';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('/api/subject')
 @UseGuards(RolesGuard)
@@ -23,6 +23,7 @@ export class SubjectController {
     },
   })
   @Get()
+  @ApiCookieAuth()
 @Roles('user')
     async fetchUserSubject(@UserDecorator("id") userId:number){
     return await this.subjectService.fetchUserSubject(userId);
@@ -40,6 +41,7 @@ export class SubjectController {
     },
   })
   @Post()
+@ApiCookieAuth()
 @Roles('user')
     async addNewSubject(@Body() body:CreateSubjectDto, @UserDecorator("id") userId:number){
         const name = body.name
@@ -58,7 +60,8 @@ export class SubjectController {
     },
   })
   @Patch()
-@Roles('user')
+  @ApiCookieAuth()
+  @Roles('user')
 async modifySubject(@Body() body:ModifySubjectDto, @UserDecorator("id") userId:number){
     const name = body.selected
     const newName = body.name    
@@ -77,7 +80,8 @@ async modifySubject(@Body() body:ModifySubjectDto, @UserDecorator("id") userId:n
     },
   })
   @Delete()
-@Roles('user')
+  @ApiCookieAuth()
+  @Roles('user')
 async deleteSubject(@Body() body:CreateSubjectDto, @UserDecorator("id") userId:number){
     const name = body.name
     return await this.subjectService.deleteSubject(name, userId);

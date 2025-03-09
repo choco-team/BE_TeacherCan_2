@@ -51,7 +51,7 @@ export class LlmService {
         try {
             const sessionData = await this.sessionRepository.findOne({ where: { id: sessionId } });
             const question = await this.questionRepository.findOne({ where: { id: questionId }, relations: ["subjects"] });
-            if (sessionData.userId !== question.subjects.userId) {
+            if (sessionData.userId !== question.subject.userId) {
                 throw new HttpException("문항 접근 권한이 없습니다", HttpStatus.FORBIDDEN);
             }
 

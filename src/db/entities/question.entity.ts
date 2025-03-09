@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Generated } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Generated, OneToMany } from "typeorm";
 import { Subject } from "./subject.entity"; // 🔹 FK 관계 대상 테이블
+import { StudentAnswer } from "./studentAnswer.entity";
 
 @Entity("questions")
 export class Question {
@@ -9,7 +10,7 @@ export class Question {
     /** 🔹 FK 관계 (Many-to-One) */
     @ManyToOne(() => Subject, (subject) => subject.questions, { onDelete: "CASCADE", eager: true }) 
     @JoinColumn({ name: "subjectsId" }) // 🔹 FK 컬럼과 매핑
-    subjects: Subject;
+    subject: Subject;
 
     /** 🔹 FK ID 컬럼 (DB에서 직접 참조 가능) */
     @Column({ type: "int" })
@@ -17,6 +18,10 @@ export class Question {
 
     @Column({ length: 255 })
     title: string;
+
+      // ✅ One-to-Many 관계: 한 유저가 여러 답안을 가질 수 있음
+  @OneToMany(() => StudentAnswer, (studentAnswer) => studentAnswer.user)
+  studentAnswer: StudentAnswer[];
 
     @Column("text")
     encryptedContent: string; // 🔹 암호화된 본문

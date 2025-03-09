@@ -106,14 +106,14 @@ export class StudentService {
                 relations: ["subjects"]
             });
 
-            if (!question || !question.subjects) {
+            if (!question || !question.subject) {
                 throw new HttpException(
                     "⚠️ 유효하지 않은 시험 문항입니다.",
                     HttpStatus.NOT_FOUND
                 );
             }
 
-            if (verifyToken.user !== question.subjects.userId) {
+            if (verifyToken.user !== question.subject.userId) {
                 throw new HttpException(
                     "🚫 잘못된 시험지의 결과를 작성하였습니다.",
                     HttpStatus.NOT_ACCEPTABLE
@@ -146,4 +146,16 @@ export class StudentService {
         }
     }
 
+
+    async getStudentAnswerList(studentNumber:number, userId:number){
+        const answerList = await this.studentAnswerRepository.find({where:{studentNumber, userId}, relations:["question"]})
+        const responseData = answerList.map(answer => ({
+            id: answer.id,
+            correctAnswer: JSON.parse(this.cryptoService.decryptAES(answer.question.encryptedCorrectAnswer, answer.question.ivCorrectAnswer)),
+            answerSheet: JSON.parse(this.cryptoService.decryptAES(answer.question.encryptedAnswerSheets,answer.question.ivAnswerSheets)),
+            title: answer.question.title,
+            studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
+          }));
+          return responseData
+        }
 }

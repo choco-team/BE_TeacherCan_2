@@ -8,6 +8,7 @@ import { Repository } from 'typeorm'
 import { ConfigService } from '@nestjs/config';
 import { CryptoService } from 'src/services/crypto.service';
 import * as jwt from "jsonwebtoken";
+import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
 
 @Injectable()
 export class QuestionService {
@@ -18,6 +19,8 @@ export class QuestionService {
         @InjectRepository(Subject)
         private readonly subjectRepository: Repository<Subject>,
 
+        @InjectRepository(StudentAnswer)
+        private readonly studentAnswerRepository: Repository<StudentAnswer>,
 
         private readonly configService: ConfigService,
         private readonly cryptoService: CryptoService
@@ -95,7 +98,7 @@ async getQuestionQRcode(id: number, userId: number) {
         throw new HttpException("질문을 찾을 수 없습니다", HttpStatus.NOT_FOUND);
     }
 
-    if (question.subjects?.userId !== userId) {
+    if (question.subject?.userId !== userId) {
         throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN);
     }
 
@@ -135,7 +138,7 @@ async getAnswerPage(token: string) {
         }
 
         // ✅ 권한 체크 (question.subjects가 null일 가능성 대비)
-        if (!question.subjects || question.subjects.userId !== verifyToken.user) {
+        if (!question.subject || question.subject.userId !== verifyToken.user) {
             throw new HttpException("허가되지 않은 접근입니다", HttpStatus.FORBIDDEN);
         }
 
@@ -151,13 +154,12 @@ async getAnswerPage(token: string) {
     }
 }
 
-
     
     async deleteQuestionOnDB(id, userId) {
         const question = await this.questionRepository.findOne({ where: { id }, relations: ["subjects"] });
     
         // 권한 체크
-        if (question.subjects.userId !== userId) {
+        if (question.subject.userId !== userId) {
             throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN);
         }
     
@@ -172,7 +174,7 @@ async getAnswerPage(token: string) {
         const question = await this.questionRepository.findOne({ where: { id }, relations: ["subjects"] });
     
         // 권한 체크
-        if (question.subjects.userId !== userId) {
+        if (question.subject.userId !== userId) {
             throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN);
         }
     
@@ -186,7 +188,7 @@ async getAnswerPage(token: string) {
             title: question.title,
             content: content,
             comment: comment,
-            subjectName: question.subjects.name,
+            subjectName: question.subject.name,
             answerSheet: answerSheet,
             correctAnswer: correctAnswer,
             id: question.id,
@@ -194,4 +196,14 @@ async getAnswerPage(token: string) {
     
         return questionData;
     }
+        async getStudentAnswerThisQuestion(questionId, userId){
+            const studentAnswer = await this.studentAnswerRepository.find({where: {questionId, userId}})
+            const responseData = studentAnswer.map(answer => ({
+                id: answer.id,
+                studentNumber: answer.studentNumber,
+                studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
+            })
+            )
+            return responseData
+        }
                 }

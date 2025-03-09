@@ -3,8 +3,8 @@ import { QuestionService } from './question.service';
 import { Roles } from 'src/decorator/roles.decorator';
 import { UserDecorator } from 'src/decorator/user.decorator';
 import { RolesGuard } from 'src/auth/role.guard';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AnswerSheetResponseDto, DeleteQuestionDto, QuestionDataResponseDto, QuestionInfoResponseDto, UrlDto } from 'src/dto/response.dto';
+import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AnswerSheetResponseDto, DeleteQuestionDto, QuestionDataResponseDto, QuestionInfoResponseDto, StudentAnswerPerQuestionDto, UrlDto } from 'src/dto/response.dto';
 
 @ApiTags("/api/question")
 @UseGuards(RolesGuard)
@@ -16,6 +16,7 @@ export class QuestionController {
       @ApiBody({description: '문항 전체 정보', type: QuestionDataResponseDto})
       @Post()
       @Roles("user")
+      @ApiCookieAuth()
       async postQuestionOnDB(@Body() body, @UserDecorator("id") userId:number){
         await this.questionService.postQuestionOnDB(body,userId)
       }
@@ -24,6 +25,7 @@ export class QuestionController {
       @ApiResponse({description: '문항 목록을 가져옵니다', type: QuestionInfoResponseDto})
       @Get("/list/:page/:subject?")
       @Roles("user")
+      @ApiCookieAuth()
       async getQuestionList(@Param("page") page: number, @Param("subject") subject:string | undefined, @UserDecorator("id") userId:number){
         return await this.questionService.getQuestionList(page, userId, subject)
       }
@@ -32,6 +34,7 @@ export class QuestionController {
       @ApiResponse({description: 'URL을 가져옵니다', type: UrlDto})
       @Get("/qrcode")
       @Roles("user")
+      @ApiCookieAuth()
       async getQuestionQRcode(@Query("id") id:number, @UserDecorator("id") userId:number){
         return await this.questionService.getQuestionQRcode(id,userId)
       }
@@ -47,6 +50,7 @@ export class QuestionController {
       @ApiBody({description:'삭제할 문항 번호', type: DeleteQuestionDto})
       @Delete()
       @Roles("user")
+      @ApiCookieAuth()
       async deleteQuestionOnDB(@Body("id") id:number, @UserDecorator("id") userId:number){
         return await this.questionService.deleteQuestionOnDB(id,userId)
       }
@@ -54,8 +58,27 @@ export class QuestionController {
       @ApiOperation({summary: '문항 수정 정보 불러오기', description: '특정 문항 수정을 위한 상세 정보를 불러옵니다.(세션id 쿠키 필수)'})
       @ApiResponse({description: "문항의 답안 정보를 가져옵니다", type:QuestionDataResponseDto })
       @Get("/edit/:id")
+      @ApiCookieAuth()
       @Roles("user")
       async getQuestionDataForEdit(@Param("id") id:number, @UserDecorator("id") userId:number){
         return await this.questionService.getQuestionDataForEdit(id,userId)
       }
-}
+
+      @ApiOperation({summary: '문항별 학생 답안 불러오기', description: '특정 문항의 학생 답안을 모두 불러옵니다. (세션id 쿠키 필수)'})
+      @ApiResponse({
+        description: "문항의 학생 답안을 모두 가져옵니다", example: [{id: 3, studentNumber: 1, studentAnswer: [4, "일의 자리에서 받아올림합니다"]}, {id: 3, studentNumber: 2, studentAnswer: [1, "십의 자리에서 받아올림합니다"]}],
+        schema: {type: "array", 
+          items:{type: "object",
+            properties:
+            {id: {type: "number"},
+            studentNumber: {type: "number"},
+            studentAnswer: {oneOf: [{type: "string"}, {type: "number"}]}}}} })
+      @Get('/answer/list')
+      @ApiCookieAuth()
+      @Roles('user')
+      async getStudentAnswerThisQuestion(@Query('id') questionId: number, @UserDecorator('id') userId:number){
+        return await this.questionService.getStudentAnswerThisQuestion(questionId, userId)
+      }    
+    }
+
+    
