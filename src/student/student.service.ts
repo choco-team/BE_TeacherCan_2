@@ -5,10 +5,11 @@ import { User } from 'src/db/entities/user.entity';
 import { Session } from 'src/db/entities/session.entity';
 import { Question } from 'src/db/entities/question.entity';
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
-import { studentAnswerDto } from './student.controller';
+import { studentAnswerInterface } from './student.controller';
 import { CryptoService } from 'src/services/crypto.service'; // 암호화 서비스 추가
 import { ConfigService } from '@nestjs/config';
 import * as jwt from "jsonwebtoken"
+import { studentInterface } from 'src/dto/user.dto';
 
 @Injectable()
 export class StudentService {
@@ -39,7 +40,7 @@ export class StudentService {
         }
 
         // 학생 정보를 복호화
-        const decryptedStudentInfo = JSON.parse(this.cryptoService.decryptAES(user.encryptedStudentInfo, user.ivStudentInfo));
+        const decryptedStudentInfo:studentInterface = JSON.parse(this.cryptoService.decryptAES(user.encryptedStudentInfo, user.ivStudentInfo));
 
         return decryptedStudentInfo;
     }
@@ -88,7 +89,7 @@ export class StudentService {
     }
 
     /** 🔹 학생 답안 제출 */
-    async submitStudentAnswer(body: studentAnswerDto) {
+    async submitStudentAnswer(body: studentAnswerInterface) {
         try {
 
             
@@ -105,14 +106,14 @@ export class StudentService {
                 relations: ["subjects"]
             });
 
-            if (!question || !question.subjects) {
+            if (!question || !question.subject) {
                 throw new HttpException(
                     "⚠️ 유효하지 않은 시험 문항입니다.",
                     HttpStatus.NOT_FOUND
                 );
             }
 
-            if (verifyToken.user !== question.subjects.userId) {
+            if (verifyToken.user !== question.subject.userId) {
                 throw new HttpException(
                     "🚫 잘못된 시험지의 결과를 작성하였습니다.",
                     HttpStatus.NOT_ACCEPTABLE
@@ -145,4 +146,16 @@ export class StudentService {
         }
     }
 
+
+    async getStudentAnswerList(studentNumber:number, userId:number){
+        const answerList = await this.studentAnswerRepository.find({where:{studentNumber, userId}, relations:["question"]})
+        const responseData = answerList.map(answer => ({
+            id: answer.id,
+            correctAnswer: JSON.parse(this.cryptoService.decryptAES(answer.question.encryptedCorrectAnswer, answer.question.ivCorrectAnswer)),
+            answerSheet: JSON.parse(this.cryptoService.decryptAES(answer.question.encryptedAnswerSheets,answer.question.ivAnswerSheets)),
+            title: answer.question.title,
+            studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
+          }));
+          return responseData
+        }
 }

@@ -1,13 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/db/entities/question.entity';
-import { Session } from 'src/db/entities/session.entity';
 import { Subject } from 'src/db/entities/subject.entity';
 import { questionDataDto } from 'src/dto/question.dto';
 import { Repository } from 'typeorm'
 import { ConfigService } from '@nestjs/config';
 import { CryptoService } from 'src/services/crypto.service';
 import * as jwt from "jsonwebtoken";
+import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
+import { User } from 'src/db/entities/user.entity';
 
 @Injectable()
 export class QuestionService {
@@ -18,8 +19,11 @@ export class QuestionService {
         @InjectRepository(Subject)
         private readonly subjectRepository: Repository<Subject>,
 
-        @InjectRepository(Session)
-        private readonly sessionRepository: Repository<Session>,
+        @InjectRepository(StudentAnswer)
+        private readonly studentAnswerRepository: Repository<StudentAnswer>,
+
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
 
         private readonly configService: ConfigService,
         private readonly cryptoService: CryptoService
@@ -57,33 +61,6 @@ export class QuestionService {
         await this.questionRepository.save(question);
     }
 
-    async getQuestionOnDB(id: number, userId: number) {
-        const question = await this.questionRepository.findOne({
-            where: { id },
-            relations: ["subjects"], // 과목 정보도 함께 가져오기
-        });
-    
-        if (!question) {
-            throw new HttpException("해당 질문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
-        }
-    
-        if (question.subjects?.userId !== userId) {
-            throw new HttpException("권한이 없습니다.", HttpStatus.FORBIDDEN);
-        }
-    
-        // 복호화 처리: 암호화된 필드들 복호화
-        const questionInfo: questionDataDto = {
-            id: question.id,
-            title: question.title,
-            subjectName: question.subjects.name,
-            comment: question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null,
-            content: question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null,
-            correctAnswer: question.encryptedCorrectAnswer ? JSON.parse(this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null,
-            answerSheet: question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null,
-        };
-    
-        return questionInfo;
-    }
     
     
     async getQuestionList(page: number, userId: number, subject: string | undefined) {
@@ -124,7 +101,7 @@ async getQuestionQRcode(id: number, userId: number) {
         throw new HttpException("질문을 찾을 수 없습니다", HttpStatus.NOT_FOUND);
     }
 
-    if (question.subjects?.userId !== userId) {
+    if (question.subject?.userId !== userId) {
         throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN);
     }
 
@@ -164,7 +141,7 @@ async getAnswerPage(token: string) {
         }
 
         // ✅ 권한 체크 (question.subjects가 null일 가능성 대비)
-        if (!question.subjects || question.subjects.userId !== verifyToken.user) {
+        if (!question.subject || question.subject.userId !== verifyToken.user) {
             throw new HttpException("허가되지 않은 접근입니다", HttpStatus.FORBIDDEN);
         }
 
@@ -180,25 +157,27 @@ async getAnswerPage(token: string) {
     }
 }
 
-
     
     async deleteQuestionOnDB(id, userId) {
         const question = await this.questionRepository.findOne({ where: { id }, relations: ["subjects"] });
     
         // 권한 체크
-        if (question.subjects.userId !== userId) {
+        if (question.subject.userId !== userId) {
             throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN);
         }
     
         // 삭제 처리
-        return await this.questionRepository.delete({ id });
+       const DeleteResult = await this.questionRepository.delete({ id });
+        if (DeleteResult.affected===0){
+            throw new HttpException("문항을 찾을 수 없어 삭제에 실패하였습니다", HttpStatus.NOT_FOUND)
+        }
     }
     
     async getQuestionDataForEdit(id, userId) {
         const question = await this.questionRepository.findOne({ where: { id }, relations: ["subjects"] });
     
         // 권한 체크
-        if (question.subjects.userId !== userId) {
+        if (question.subject.userId !== userId) {
             throw new HttpException("권한이 없습니다", HttpStatus.FORBIDDEN);
         }
     
@@ -212,7 +191,7 @@ async getAnswerPage(token: string) {
             title: question.title,
             content: content,
             comment: comment,
-            subjectName: question.subjects.name,
+            subjectName: question.subject.name,
             answerSheet: answerSheet,
             correctAnswer: correctAnswer,
             id: question.id,
@@ -220,4 +199,19 @@ async getAnswerPage(token: string) {
     
         return questionData;
     }
+        async getStudentAnswerThisQuestion(questionId, userId){
+            const studentAnswer = await this.studentAnswerRepository.find({where: {questionId, userId}})
+            const userData = await this.userRepository.findOne({where: {id: userId}})
+            const studentList:{name: string, number:number}[] = JSON.parse(await this.cryptoService.decryptAES(userData.encryptedStudentInfo, userData.ivStudentInfo))
+            const responseData = studentAnswer.map(answer => {
+                const student = studentList.find(student => student.number === answer.studentNumber);
+                return {
+                    id: answer.id,
+                    name: student?.name,
+                    studentNumber: student?.number,
+                    studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
+                };
+            });
+            return responseData
+        }
                 }

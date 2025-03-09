@@ -7,17 +7,21 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 
 const AES_KEY_PATH = 'aes_key.enc'; // AES 키를 저장할 파일 경로
-const RSA_PRIVATE_KEY = process.env.RSA_PRIVATE_KEY; // 환경변수에서 RSA 비밀키 로드
+const RSA_PRIVATE_KEY = fs.readFileSync('private_key.pem','utf8'); // 환경변수에서 RSA 비밀키 로드
 
 @Injectable()
-export class CryptoService {
+export  class CryptoService {
     private aesKey: Buffer; // 🔹 AES 키 저장
 
-    constructor(
+     constructor(
         @InjectRepository(RsaKey)
         private readonly rsaRepo: Repository<RsaKey>,
     ) {
-        this.aesKey = this.decryptAESKey(); // 🔹 서버 시작 시 AES 키 복호화하여 로드
+        this.initialize(); // 🔹 서버 시작 시 AES 키 복호화하여 로드
+    }
+
+    private async initialize() {
+        this.aesKey = await this.decryptAESKey();
     }
 
     /** 🔹 서버 실행 시 RSA 공개키가 DB에 없으면 생성하여 저장 */
@@ -28,7 +32,7 @@ export class CryptoService {
         });
                 if (!existingKey) {
             if (!RSA_PRIVATE_KEY) {
-                throw new Error('RSA 비밀키가 환경변수에 없습니다.');
+                throw new Error('RSA 비밀키가 없습니다.');
             }
 
             // RSA 비밀키에서 공개키 생성
@@ -64,10 +68,10 @@ export class CryptoService {
     }
 
     /** 🔹 AES 키 복호화하여 로드 */
-    private decryptAESKey(): Buffer {
+    private async decryptAESKey(): Promise<Buffer> {
         if (!fs.existsSync(AES_KEY_PATH)) {
-            throw new Error('AES 키 파일이 없습니다.');
-        }
+            await this.ensureRSAKeyExists()
+            await this.generateAndEncryptAESKey()        }
         if (!RSA_PRIVATE_KEY) {
             throw new Error('RSA 비밀키가 환경변수에 없습니다.');
         }
