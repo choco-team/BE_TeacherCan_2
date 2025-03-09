@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne } from "typeorm";
+import { Entity, Column, ManyToOne, CreateDateColumn } from "typeorm";
 import { Room } from "./room.entity";
 import { Student } from "./student.entity"
 
@@ -15,6 +15,9 @@ export class Music {
 
   @Column({ type: "varchar", length: 255, nullable: true })
   title?: string;
+
+  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  timeStamp: Date;
 
   @ManyToOne(() => Student, (student) => student.id, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   student: Student;

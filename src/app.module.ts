@@ -18,6 +18,7 @@ import { StudentAnswer } from './db/entities/studentAnswer.entity';
 import { User } from './db/entities/user.entity';
 import { CryptoModule } from './services/crypto.module';
 import { CryptoService } from './services/crypto.service';
+import { MusicModule } from './music/music.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CryptoService } from './services/crypto.service';
     }),
     StudentModule,
     LlmModule,
+    MusicModule,
   ],
   providers: [CryptoModule,CryptoService,
     {

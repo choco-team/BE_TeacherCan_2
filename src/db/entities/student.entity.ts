@@ -10,7 +10,10 @@ export class Student {
   roomId: string;
 
   @Column({ type: "varchar", length: 255 })
-  name: string;
+  encryptedName: string;
+
+  @Column({ type: "varchar", length: 255 })
+  ivName: string;
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   visitedAt: Date;
