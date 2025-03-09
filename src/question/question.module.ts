@@ -8,9 +8,10 @@ import { Session } from 'src/db/entities/session.entity';
 import { CryptoService } from 'src/services/crypto.service';
 import { RsaKey } from 'src/db/entities/rsaKey.entity';
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
+import { User } from 'src/db/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Session, Subject, Question, RsaKey, StudentAnswer])],
+  imports: [TypeOrmModule.forFeature([Session, Subject, Question, RsaKey, StudentAnswer, User])],
   controllers: [QuestionController],
   providers: [QuestionService, CryptoService]
 })

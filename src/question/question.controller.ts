@@ -66,12 +66,13 @@ export class QuestionController {
 
       @ApiOperation({summary: '문항별 학생 답안 불러오기', description: '특정 문항의 학생 답안을 모두 불러옵니다. (세션id 쿠키 필수)'})
       @ApiResponse({
-        description: "문항의 학생 답안을 모두 가져옵니다", example: [{id: 3, studentNumber: 1, studentAnswer: [4, "일의 자리에서 받아올림합니다"]}, {id: 3, studentNumber: 2, studentAnswer: [1, "십의 자리에서 받아올림합니다"]}],
+        description: "문항의 학생 답안을 모두 가져옵니다", example: [{id: 3, studentNumber: 1, name: "홍길동", studentAnswer: [4, "일의 자리에서 받아올림합니다"]}, {id: 3, studentNumber: 2, name: "김철수", studentAnswer: [1, "십의 자리에서 받아올림합니다"]}],
         schema: {type: "array", 
           items:{type: "object",
             properties:
             {id: {type: "number"},
             studentNumber: {type: "number"},
+            name: {type: "string"},
             studentAnswer: {oneOf: [{type: "string"}, {type: "number"}]}}}} })
       @Get('/answer/list')
       @ApiCookieAuth()

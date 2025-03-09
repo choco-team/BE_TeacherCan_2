@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/db/entities/question.entity';
-import { Session } from 'src/db/entities/session.entity';
 import { Subject } from 'src/db/entities/subject.entity';
 import { questionDataDto } from 'src/dto/question.dto';
 import { Repository } from 'typeorm'
@@ -9,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { CryptoService } from 'src/services/crypto.service';
 import * as jwt from "jsonwebtoken";
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
+import { User } from 'src/db/entities/user.entity';
 
 @Injectable()
 export class QuestionService {
@@ -21,6 +21,9 @@ export class QuestionService {
 
         @InjectRepository(StudentAnswer)
         private readonly studentAnswerRepository: Repository<StudentAnswer>,
+
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
 
         private readonly configService: ConfigService,
         private readonly cryptoService: CryptoService
@@ -198,12 +201,17 @@ async getAnswerPage(token: string) {
     }
         async getStudentAnswerThisQuestion(questionId, userId){
             const studentAnswer = await this.studentAnswerRepository.find({where: {questionId, userId}})
-            const responseData = studentAnswer.map(answer => ({
-                id: answer.id,
-                studentNumber: answer.studentNumber,
-                studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
-            })
-            )
+            const userData = await this.userRepository.findOne({where: {id: userId}})
+            const studentList:{name: string, number:number}[] = JSON.parse(await this.cryptoService.decryptAES(userData.encryptedStudentInfo, userData.ivStudentInfo))
+            const responseData = studentAnswer.map(answer => {
+                const student = studentList.find(student => student.number === answer.studentNumber);
+                return {
+                    id: answer.id,
+                    name: student?.name,
+                    studentNumber: student?.number,
+                    studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
+                };
+            });
             return responseData
         }
                 }
