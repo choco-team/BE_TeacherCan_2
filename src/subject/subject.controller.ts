@@ -6,9 +6,9 @@ import { CreateSubjectDto, ModifySubjectDto } from '../dto/subject.dto';
 import { RolesGuard } from 'src/auth/role.guard';
 import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-@ApiTags('/api/subject')
+@ApiTags('/subject')
 @UseGuards(RolesGuard)
-@Controller('/api/subject')
+@Controller('/subject')
 export class SubjectController {
   constructor(private readonly subjectService: SubjectService) {}
 

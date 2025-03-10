@@ -6,9 +6,10 @@ import { Music } from 'src/db/entities/music.entity';
 import { Room } from 'src/db/entities/room.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CryptoService } from 'src/services/crypto.service';
+import { RsaKey } from 'src/db/entities/rsaKey.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Student, Music, Room])],
+  imports: [TypeOrmModule.forFeature([Student, Music, Room, RsaKey])],
   providers: [MusicService, CryptoService],
   controllers: [MusicController]
 })

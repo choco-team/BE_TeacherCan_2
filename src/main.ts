@@ -42,16 +42,16 @@ if (process.env.LOCAL==="true"){
 
 
 
-  // ✅ 정적 파일 서빙 - 제거 예정
-  app.use(express.static(join(process.cwd(), "front")));
+  // // ✅ 정적 파일 서빙 - 제거 예정
+  // app.use(express.static(join(process.cwd(), "front")));
 
-  // ✅ API 요청이 아닌 경우 index.html 제공 (Svelte 라우팅 지원) - 제거 예정
-  app.use((req, res, next) => {
-    if (req.originalUrl.startsWith("/api")) {
-      return next();
-    }
-    res.sendFile(join(process.cwd(), "front", "index.html"));
-  });
+  // // ✅ API 요청이 아닌 경우 index.html 제공 (Svelte 라우팅 지원) - 제거 예정
+  // app.use((req, res, next) => {
+  //   if (req.originalUrl.startsWith("/api")) {
+  //     return next();
+  //   }
+  //   res.sendFile(join(process.cwd(), "front", "index.html"));
+  // });
 
 
 

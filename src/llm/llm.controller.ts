@@ -6,8 +6,8 @@ import { studentAnswerDataInterface } from 'src/dto/question.dto';
 import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { StudentAnswerDataDto } from 'src/dto/response.dto';
 
-@ApiTags('/api/llm')
-@Controller('/api/llm')
+@ApiTags('/llm')
+@Controller('/llm')
 export class LlmController {
       constructor(private readonly llmService: LlmService) {}
 

@@ -15,6 +15,10 @@ export class Student {
   @Column({ type: "varchar", length: 255 })
   ivName: string;
 
+    /** 🔹 SHA-256 해싱된 OAuth ID */
+    @Column({ type: 'varchar', length: 255, unique: true })
+    nameHash: string;  
+
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   visitedAt: Date;
 

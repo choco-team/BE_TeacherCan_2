@@ -24,11 +24,6 @@ import { MusicModule } from './music/music.module';
   imports: [
     TypeOrmModule.forRoot(AppDataSource.options), // AppDataSource 적용
     TypeOrmModule.forFeature([RsaKey, Question, StudentAnswer, User]),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'front'),
-      serveRoot: '/', // ✅ 루트 경로에서 정적 파일 서빙
-      exclude: ['/api*'], // ✅ API 요청 제외 (API는 /api 경로에서 제공)
-    }),
     AuthModule, // ✅ `AuthModule`을 통해 `AuthGuard`, `RolesGuard` 제공
     SubjectModule,
     QuestionModule,

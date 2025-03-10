@@ -6,9 +6,9 @@ import { RolesGuard } from 'src/auth/role.guard';
 import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AnswerSheetResponseDto, DeleteQuestionDto, QuestionDataResponseDto, QuestionInfoResponseDto, StudentAnswerPerQuestionDto, UrlDto } from 'src/dto/response.dto';
 
-@ApiTags("/api/question")
+@ApiTags("/question")
 @UseGuards(RolesGuard)
-@Controller('/api/question')
+@Controller('/question')
 export class QuestionController {
       constructor(private readonly questionService: QuestionService) {}
     

@@ -1,11 +1,14 @@
-import { Entity, Column, ManyToOne, CreateDateColumn } from "typeorm";
+import { Entity, Column, ManyToOne, CreateDateColumn, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Room } from "./room.entity";
 import { Student } from "./student.entity"
 
 @Entity("musics")
 export class Music {
+  @PrimaryGeneratedColumn("increment")
+  id: number;
+
   @Column({ type: "varchar", length: 255 })
-  id: string;
+  musicId: string;
 
   @Column({ type: "varchar", length: 255 })
   roomId: string;
