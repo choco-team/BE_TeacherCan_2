@@ -116,4 +116,5 @@ export class AuthService {
       if (session.affected===0)
       {throw new HttpException("서버 오류가 발생하였습니다", HttpStatus.INTERNAL_SERVER_ERROR)}
       }
+      
   }

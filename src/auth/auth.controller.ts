@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpException, HttpStatus, Query, Req, Res, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpException, HttpStatus, Query, Req, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthRequest } from './auth.types';
 import { CookieInterceptor } from 'src/interceptor/cookie.interceptor';
@@ -49,6 +49,7 @@ export class AuthController {
   @ApiCookieAuth()
   @ApiOperation({summary: '로그아웃', description: 'httpOnly 쿠키를 삭제하여 로그아웃합니다'})
   async logout(@UserDecorator("id") userId:number) {
-  return await this.authService.logout(userId);
+  await this.authService.logout(userId);
+  return { message: '로그아웃 성공' };
 }
 }

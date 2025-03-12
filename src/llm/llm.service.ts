@@ -133,8 +133,8 @@ export class LlmService {
             );
 
             return response.data.choices[0]?.message?.content ?? '';
-        } catch (error) {
-            throw new HttpException("Llm 통신 중 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR);
+        }  catch (error) {
+            throw error; // ❗ 원래 예외를 유지하여 던짐
         }
     }
 
@@ -162,8 +162,8 @@ export class LlmService {
 
             await this.userRepository.save(userData);
             await this.tokenUsageRepository.save(tokenUsage);
-        } catch (error) {
-            throw new HttpException("토큰 계산 중에 서버 오류가 발생하였습니다", HttpStatus.INTERNAL_SERVER_ERROR);
+        }  catch (error) {
+            throw error; // ❗ 원래 예외를 유지하여 던짐
         }
     }
 
@@ -177,8 +177,8 @@ export class LlmService {
             }
 
             return userData.remainingTokens;
-        } catch (error) {
-            throw new HttpException("서버 오류가 발생하였습니다", HttpStatus.INTERNAL_SERVER_ERROR);
+        }  catch (error) {
+            throw error; // ❗ 원래 예외를 유지하여 던짐
         }
     }
 }
