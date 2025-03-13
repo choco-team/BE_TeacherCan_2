@@ -18,8 +18,12 @@ async function bootstrap() {
     await cryptoService.generateAndEncryptAESKey();
 
 // CORS 설정하기
+const isLocal = process.env.LOCAL === 'true';
+
 app.enableCors({
-  origin: 'https://www.teachercan.com/',
+  origin: isLocal
+    ? ['http://localhost:3000']  // 개발 환경
+    : ['https://www.teachercan.com'], // 배포 환경
   credentials: true,
 });
 
