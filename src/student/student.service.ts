@@ -138,7 +138,6 @@ export class StudentService {
             if (error instanceof HttpException) {
                 throw error;
             }
-            console.error("🔥 submitStudentAnswer Error:", error);
             throw new HttpException(
                 "🚨 서버 오류가 발생하였습니다. 관리자에게 문의하세요.",
                 HttpStatus.INTERNAL_SERVER_ERROR

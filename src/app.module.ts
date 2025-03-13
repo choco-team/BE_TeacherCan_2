@@ -18,16 +18,12 @@ import { StudentAnswer } from './db/entities/studentAnswer.entity';
 import { User } from './db/entities/user.entity';
 import { CryptoModule } from './services/crypto.module';
 import { CryptoService } from './services/crypto.service';
+import { MusicModule } from './music/music.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(AppDataSource.options), // AppDataSource 적용
     TypeOrmModule.forFeature([RsaKey, Question, StudentAnswer, User]),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'front'),
-      serveRoot: '/', // ✅ 루트 경로에서 정적 파일 서빙
-      exclude: ['*'], // ✅ API 요청 제외 (API는  경로에서 제공)
-    }),
     AuthModule, // ✅ `AuthModule`을 통해 `AuthGuard`, `RolesGuard` 제공
     SubjectModule,
     QuestionModule,
@@ -36,6 +32,7 @@ import { CryptoService } from './services/crypto.service';
     }),
     StudentModule,
     LlmModule,
+    MusicModule,
   ],
   providers: [CryptoModule,CryptoService,
     {

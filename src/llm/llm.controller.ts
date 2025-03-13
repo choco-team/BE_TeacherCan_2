@@ -27,7 +27,7 @@ export class LlmController {
         }
         if (!body.questionId) {
           throw new HttpException("문항 번호가 없습니다!", HttpStatus.BAD_REQUEST);
-        }
+        }  
         
           // 프롬프트 생성
           const prompt = await this.llmService.makeStudentPrompt(sessionId,
