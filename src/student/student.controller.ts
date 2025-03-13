@@ -12,8 +12,8 @@ export interface studentAnswerInterface{
     answer: string[]
 }
 
-@ApiTags('/api/student')
-@Controller('/api/student')
+@ApiTags('/student')
+@Controller('/student')
 export class StudentController {
           constructor(private readonly studentService: StudentService) {}
 

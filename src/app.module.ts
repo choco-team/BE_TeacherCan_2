@@ -26,7 +26,7 @@ import { CryptoService } from './services/crypto.service';
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'front'),
       serveRoot: '/', // ✅ 루트 경로에서 정적 파일 서빙
-      exclude: ['/api*'], // ✅ API 요청 제외 (API는 /api 경로에서 제공)
+      exclude: ['*'], // ✅ API 요청 제외 (API는  경로에서 제공)
     }),
     AuthModule, // ✅ `AuthModule`을 통해 `AuthGuard`, `RolesGuard` 제공
     SubjectModule,

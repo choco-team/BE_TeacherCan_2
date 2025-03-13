@@ -47,7 +47,7 @@ if (process.env.LOCAL==="true"){
 
   // ✅ API 요청이 아닌 경우 index.html 제공 (Svelte 라우팅 지원)
   app.use((req, res, next) => {
-    if (req.originalUrl.startsWith("/api")) {
+    if (req.originalUrl.startsWith("")) {
       return next();
     }
     res.sendFile(join(process.cwd(), "front", "index.html"));

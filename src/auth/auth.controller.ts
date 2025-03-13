@@ -6,8 +6,8 @@ import { UserDecorator } from 'src/decorator/user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
 import { UserIdResponseDto } from 'src/dto/response.dto';
 
-@ApiTags('/api/login')
-@Controller("/api/login")
+@ApiTags('/login')
+@Controller("/login")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
