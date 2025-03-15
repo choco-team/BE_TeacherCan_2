@@ -10,6 +10,7 @@ import { RsaKey } from 'src/db/entities/rsaKey.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([User, Subject, RsaKey])],
   controllers: [SubjectController],
-  providers: [SubjectService, CryptoService]
+  providers: [SubjectService, CryptoService],
+  exports: [SubjectService]
 })
 export class SubjectModule {}

@@ -96,4 +96,7 @@ export  class CryptoService {
         decrypted += decipher.final('utf8');
         return decrypted;
     }
+    hashData(plaintext:string){
+       return crypto.createHash('sha256').update(plaintext).digest('hex')
+    }
 }

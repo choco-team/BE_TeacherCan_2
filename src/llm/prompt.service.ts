@@ -1,44 +1,22 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { SessionService } from 'src/auth/session.service';
+import { AnswerSheetService } from 'src/question/answerSheet.service';
+import { QuestionManagementService } from 'src/question/questionManagement.service';
 
 @Injectable()
 export class PromptService {
     constructor(
         private readonly sessionService: SessionService,
+        private readonly questionManagementService: QuestionManagementService,
+        private readonly answerSheetService: AnswerSheetService
     ) {}
 
-    // 세션에 맞는 문항 생성
-    async makeQuestionPrompt(questionId: number, sessionId: string) {
-        try {
-            const sessionData = await this.sessionService.getUserBySession(sessionId);
-            const question = await this.questionRepository.findOne({ where: { id: questionId }, relations: ["subjects"] });
-            if (sessionData.id !== question.subject.userId) {
-                throw new HttpException("문항 접근 권한이 없습니다", HttpStatus.FORBIDDEN);
-            }
-
-            // 내용과 정답을 복호화
-            const decryptedContent = this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId);
-            const decryptedCorrectAnswer = this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer);
-
-            return `사용자 세션: ${sessionId}
-                    아까 작성해달라고 한 교과 학습 발달 상황 문항이야.
-                    학생 답변이 올때까지 읽기만 해
-                    문항: ${decryptedContent}
-                    ${decryptedCorrectAnswer ? "모범답안: " + decryptedCorrectAnswer : null}`;
-        } catch (error) {
-            throw new HttpException("서버 에러입니다", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     // 학생 평가 작성 프롬프트 생성
-    async makeStudentPrompt(sessionId, studentNumber, questionId, maxLength, isLastQuesiotn) {
+    async makeStudentPrompt(sessionId:string, studentNumber:number, questionId:number, maxLength:number, isLastQuesiotn:string) {
         try {
-            const question = await this.questionRepository.findOne({ where: { id: questionId } });
+            const question = await this.questionManagementService.findQuestionById(questionId)
             const userData = await this.sessionService.getUserBySession(sessionId)
-            const studentAnswer = await this.studentAnswerRepository.findOne({ where: { studentNumber: studentNumber, userId: userData.id } });
-
-            // 답안 복호화
-            const decryptedAnswer = studentAnswer ? this.cryptoService.decryptAES(studentAnswer.encryptedAnswer, studentAnswer.ivAnswer) : '';
+            const studentAnswer = await this.answerSheetService.findStudentAnswerByNumber(studentNumber, userData.id, questionId)
 
             return `사용자 세션: ${sessionId}
                     학생의 교과 학습 발달 상황을 작성하고 싶어!
@@ -55,7 +33,7 @@ export class PromptService {
                     평가는 ${maxLength}자 내외로 작성해줘`}
                     문항 : ${question.encryptedContent} 
                     정답 풀이 ${question.encryptedCorrectAnswer || "미입력했으므로 문제를 보고 알아서 정답을 염두에 둘 것"}
-                    학생 번호 ${studentNumber} 답안: ${decryptedAnswer || null}`;
+                    학생 번호 ${studentNumber} 답안: ${studentAnswer}`;
         } catch (error) {
             throw new HttpException("서버 에러입니다", HttpStatus.INTERNAL_SERVER_ERROR);
         }

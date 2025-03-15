@@ -12,7 +12,7 @@ export class LlmApiService {
     ) {}
 
     // LLM에 프롬프트 전송
-    async fetchToLlm(prompt: string, userId: number): Promise<string> {
+    async fetchToLlm(prompt: string, userId: number, promptTokens:number): Promise<string> {
         const {apiKey, apiUrl, model} = await this.loadLlmModelInfo()
         const userData = await this.authenticationService.findUserById(userId)
 

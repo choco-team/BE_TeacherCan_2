@@ -9,10 +9,16 @@ import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
 import { User } from 'src/db/entities/user.entity';
 import { CryptoService } from 'src/services/crypto.service';
 import { RsaKey } from 'src/db/entities/rsaKey.entity';
+import { LlmApiService } from './llmApi.service';
+import { PromptService } from './prompt.service';
+import { TokenService } from './token.service';
+import { QuestionManagementService } from 'src/question/questionManagement.service';
+import { SessionService } from 'src/auth/session.service';
+import { AnswerSheetService } from 'src/question/answerSheet.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, TokenUsage, Question, Session, StudentAnswer, RsaKey])],
   controllers: [LlmController ],
-  providers: [LlmService, CryptoService]
+  providers: [LlmService, CryptoService, LlmApiService, PromptService, TokenService, QuestionManagementService, SessionService, AnswerSheetService]
 })
 export class LlmModule {}

@@ -16,3 +16,10 @@ export interface userInterface{
   role: UserRole,
   sessions: Session[]
 }
+
+export interface decodedToken{
+ question: number,
+ user: number,
+ iat:number,
+ exp:number
+}
