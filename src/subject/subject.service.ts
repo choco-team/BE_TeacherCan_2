@@ -47,9 +47,15 @@ async deleteSubject(name:string, userId:number){
    return await this.fetchUserSubject(userId)
 }
 
-async findSubjectId(name: string, userId:number){
+async findSubjectByName(name: string, userId:number){
     const result = await this.subjectRepository.findOne({where: {name, userId}})
     if (!result) throw new HttpException("해당 과목을 찾을 수 없습니다", HttpStatus.NOT_FOUND)
+        return result
+    }
+async findSubjectById(id: number){
+    const result = await this.subjectRepository.findOne({where: {id}})
+    if (!result) throw new HttpException("해당 과목을 찾을 수 없습니다", HttpStatus.NOT_FOUND)
+        return result
 }
 
 }

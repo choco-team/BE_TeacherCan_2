@@ -17,9 +17,3 @@ export interface userInterface{
   sessions: Session[]
 }
 
-export interface decodedToken{
- question: number,
- user: number,
- iat:number,
- exp:number
-}
