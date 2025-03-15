@@ -1,11 +1,11 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { AuthService } from '../auth/auth.service';
 import { AuthRequest } from './auth.types';
 import { UserRole } from 'src/dto/user.dto';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly sessionService: SessionService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthRequest>();
@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    const user = await this.authService.getUserBySession(sessionId);
+    const user = await this.sessionService.getUserBySession(sessionId);
     if (!user) {
       console.log("❌ 유효하지 않은 세션");
 

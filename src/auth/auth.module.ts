@@ -4,7 +4,6 @@ import { AuthController } from './auth.controller';
 import { KakaoStrategy } from './kakao.strategy';
 import { UserModule } from '../user/user.module';
 import { SessionSerializer } from './session.serializer';
-import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/db/entities/user.entity';
 import { HttpModule } from '@nestjs/axios';
@@ -14,6 +13,9 @@ import { RolesGuard } from './role.guard';
 import { CryptoModule } from 'src/services/crypto.module';
 import { CryptoService } from 'src/services/crypto.service';
 import { RsaKey } from 'src/db/entities/rsaKey.entity';
+import { AuthenticationService } from './authentication.service';
+import { SessionService } from './session.service';
+import { OauthService } from './oauth.service';
 
 @Module({
   imports: [ TypeOrmModule.forFeature([User, Session, RsaKey]),
@@ -22,8 +24,8 @@ import { RsaKey } from 'src/db/entities/rsaKey.entity';
   CryptoModule,
   HttpModule],
   controllers: [AuthController],
-  providers: [KakaoStrategy, SessionSerializer, CryptoService, AuthService, AuthGuard, RolesGuard],
-  exports: [AuthGuard, RolesGuard, AuthService]
+  providers: [KakaoStrategy, SessionSerializer, CryptoService, AuthenticationService, SessionService, OauthService, AuthGuard, RolesGuard],
+  exports: [AuthGuard, RolesGuard, AuthenticationService, SessionService]
 })
 export class AuthModule {}
 
