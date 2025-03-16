@@ -22,7 +22,7 @@ import { OauthService } from './oauth.service';
   HttpModule],
   controllers: [AuthController],
   providers: [KakaoStrategy, CryptoService, AuthenticationService, SessionService, OauthService, AuthGuard, RolesGuard],
-  exports: [AuthGuard, RolesGuard, AuthenticationService]
+  exports: [AuthGuard, RolesGuard, AuthenticationService, SessionService]
 })
 export class AuthModule {}
 

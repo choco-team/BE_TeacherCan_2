@@ -12,10 +12,6 @@ import { AuthGuard } from './auth/auth.guard';
 import { RolesGuard } from './auth/role.guard';
 import { StudentModule } from './student/student.module';
 import { LlmModule } from './llm/llm.module';
-import { RsaKey } from './db/entities/rsaKey.entity';
-import { Question } from './db/entities/question.entity';
-import { StudentAnswer } from './db/entities/studentAnswer.entity';
-import { User } from './db/entities/user.entity';
 import { CryptoModule } from './services/crypto.module';
 import { CryptoService } from './services/crypto.service';
 import { MusicModule } from './music/music.module';
@@ -23,7 +19,6 @@ import { MusicModule } from './music/music.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot(AppDataSource.options), // AppDataSource 적용
-    TypeOrmModule.forFeature([RsaKey, Question, StudentAnswer, User]),
     AuthModule, // ✅ `AuthModule`을 통해 `AuthGuard`, `RolesGuard` 제공
     SubjectModule,
     QuestionModule,

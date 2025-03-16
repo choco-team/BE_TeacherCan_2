@@ -72,7 +72,7 @@ async getAnswerPage(token: string) {
     const subject = await this.subjectService.findSubjectByName(question.subjectName, userId)
     
     if (!question.id){
-    const newQuestion = this.questionManagementService.postQuestionOnDB(question)
+    const newQuestion = await this.questionManagementService.postQuestionOnDB(question)
     newQuestion.subjectsId = subject.id
     return await this.questionManagementService.saveQuestionOnDB(newQuestion)
     } else{

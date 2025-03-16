@@ -25,16 +25,17 @@ export class AnswerSheetService {
         async getStudentAnswerThisQuestion(questionId, userId){
             const studentAnswer = await this.studentAnswerRepository.find({where: {questionId, userId}})
             const userData = await this.authenticationService.findUserById(userId)
-            const studentList:{name: string, number:number}[] = JSON.parse(this.cryptoService.decryptAES(userData.encryptedStudentInfo, userData.ivStudentInfo))
-            const responseData = studentAnswer.map(answer => {
+            const studentList:{name: string, number:number}[] = JSON.parse(await this.cryptoService.decryptAES(userData.encryptedStudentInfo, userData.ivStudentInfo))
+            const responseData = await Promise.all(studentAnswer.map(async answer => {
                 const student = studentList.find(student => student.number === answer.studentNumber);
+                const decryptedAnswer = await this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer);
                 return {
                     id: answer.id,
                     name: student?.name,
                     studentNumber: student?.number,
-                    studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
+                    studentAnswer: JSON.parse(decryptedAnswer)
                 };
-            });
+            }));
             return responseData
         }
                 }

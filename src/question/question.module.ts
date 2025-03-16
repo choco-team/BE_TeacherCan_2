@@ -11,9 +11,10 @@ import { QuestionAccessService } from './questionAccess.service';
 import { AuthenticationService } from 'src/auth/authentication.service';
 import { CryptoModule } from 'src/services/crypto.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { User } from 'src/db/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Subject, Question, StudentAnswer]), CryptoModule, AuthModule, QuestionModule],
+  imports: [TypeOrmModule.forFeature([Subject, Question, StudentAnswer, User]), CryptoModule, AuthModule, QuestionModule],
   controllers: [QuestionController],
   providers: [CryptoService, QuestionManagementService, AnswerSheetService, QuestionAccessService, AuthenticationService],
   exports: [QuestionManagementService, AnswerSheetService, QuestionAccessService]

@@ -14,12 +14,12 @@ export class QuestionManagementService {
     ){}
 
 
-     postQuestionOnDB(question:questionDataDto){
-     const newQuestion = this.questionRepository.create()
-     const content = this.cryptoService.encryptAES(question.content)
-     const comment = this.cryptoService.encryptAES(question.comment)
-     const answerSheet = this.cryptoService.encryptAES(JSON.stringify(question.answerSheet))
-     const correctAnswer = this.cryptoService.encryptAES(JSON.stringify(question.correctAnswer))
+   async  postQuestionOnDB(question:questionDataDto){
+     const newQuestion =  this.questionRepository.create()
+     const content = await this.cryptoService.encryptAES(question.content)
+     const comment = await this.cryptoService.encryptAES(question.comment)
+     const answerSheet = await this.cryptoService.encryptAES(JSON.stringify(question.answerSheet))
+     const correctAnswer = await this.cryptoService.encryptAES(JSON.stringify(question.correctAnswer))
     
      newQuestion.encryptedContent = content.encryptedData        
      newQuestion.ivContentId = content.iv
@@ -34,10 +34,10 @@ export class QuestionManagementService {
 
     async modifiedQuestionOnDB(question:questionDataDto){
         const loadQuestion = await this.findQuestionById(question.id)
-        const content = this.cryptoService.encryptAES(question.content)
-        const comment = this.cryptoService.encryptAES(question.comment)
-        const answerSheet = this.cryptoService.encryptAES(JSON.stringify(question.answerSheet))
-        const correctAnswer = this.cryptoService.encryptAES(JSON.stringify(question.correctAnswer))
+        const content = await this.cryptoService.encryptAES(question.content)
+        const comment = await this.cryptoService.encryptAES(question.comment)
+        const answerSheet = await this.cryptoService.encryptAES(JSON.stringify(question.answerSheet))
+        const correctAnswer = await this.cryptoService.encryptAES(JSON.stringify(question.correctAnswer))
        
         loadQuestion.encryptedContent = content.encryptedData        
         loadQuestion.ivContentId = content.iv
@@ -103,8 +103,8 @@ export class QuestionManagementService {
     
         const content = question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
         const comment = question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null;
-        const answerSheet = question.encryptedAnswerSheets ? JSON.parse(this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null;
-        const correctAnswer = question.encryptedCorrectAnswer ? JSON.parse(this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null;
+        const answerSheet = question.encryptedAnswerSheets ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null;
+        const correctAnswer = question.encryptedCorrectAnswer ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null;
     
         const questionData = {
             title: question.title,

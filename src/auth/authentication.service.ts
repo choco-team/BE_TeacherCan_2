@@ -28,7 +28,7 @@ export class AuthenticationService {
     return user;
 }
 
-async createNewUser(oauthId, hashedOauthId, provider){
+async createNewUser(oauthId:number, hashedOauthId:string, provider){
     try{
         const user = new User();
         user.oauthIdHash = hashedOauthId; // ✅ 직접 설정
@@ -46,7 +46,7 @@ async createNewUser(oauthId, hashedOauthId, provider){
     }
     }
 
-    async findUserById(id){
+    async findUserById(id:number){
         const userData = await this.userRepository.findOne({where:{id}})
         if (!userData) throw new HttpException("사용자 정보를 찾을 수 없습니다", HttpStatus.NOT_FOUND)
             return userData

@@ -35,7 +35,6 @@ export class AuthController {
       // ✅ 세션 생성
       const sessionId = await this.sessionService.setSession(user);
 
-
     // ✅ Express 요청 객체에 속성 추가 시 Object.assign() 사용
     Object.assign(req, { sessionId });
 
