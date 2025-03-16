@@ -37,7 +37,7 @@ async findStudentInRoom(roomId){
 
 
 async addStudentInRoom(roomId, name){
-    const {encryptedData, iv}= this.cryptoService.encryptAES(name)
+    const {encryptedData, iv}= await this.cryptoService.encryptAES(name)
     const nameHash = this.cryptoService.hashData(name)
     const findSameName = await this.studentRepository.find({where: {nameHash, roomId}})
     if (findSameName.length !==0) {throw new HttpException("방에 이름이 중복됩니다", HttpStatus.CONFLICT)}

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Scope } from '@nestjs/common';
 import { LlmController } from './llm.controller';
 import { LlmService } from './llm.service';
 import { TokenUsage } from 'src/db/entities/tokenUsage.entity';
@@ -19,7 +19,12 @@ import { AuthenticationService } from 'src/auth/authentication.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, TokenUsage, Question, Session, StudentAnswer, RsaKey])],
-  controllers: [LlmController ],
-  providers: [LlmService, CryptoService, LlmApiService, PromptService, TokenService, QuestionManagementService, SessionService, AnswerSheetService, AuthenticationService]
+  controllers: [LlmController],
+  providers: [LlmService,
+    {provide: LlmApiService,
+      useClass: LlmApiService,
+      scope: Scope.REQUEST
+    },
+    CryptoService, LlmApiService, PromptService, TokenService, QuestionManagementService, SessionService, AnswerSheetService, AuthenticationService]
 })
 export class LlmModule {}

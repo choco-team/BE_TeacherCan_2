@@ -32,11 +32,11 @@ async createNewUser(oauthId, hashedOauthId, provider){
     try{
         const user = new User();
         user.oauthIdHash = hashedOauthId; // ✅ 직접 설정
-        const oauthIdData = this.cryptoService.encryptAES(oauthId.toString()); // ✅ 직접 설정
+        const oauthIdData = await this.cryptoService.encryptAES(oauthId.toString()); // ✅ 직접 설정
         user.encryptedOauthId = oauthIdData.encryptedData
         user.ivOauthId = oauthIdData.iv
         user.provider = provider;
-        const studentInfo = this.cryptoService.encryptAES(JSON.stringify([]));
+        const studentInfo = await this.cryptoService.encryptAES(JSON.stringify([]));
         user.encryptedStudentInfo = studentInfo.encryptedData
         user.ivStudentInfo = studentInfo.iv
         user.remainingTokens = DEFAULT_TOKEN  

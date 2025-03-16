@@ -24,7 +24,7 @@ export class StudentAnswerService {
     async submitStudentAnswer(body: studentAnswerInterface) {
             const verifyToken:decodedQuestionToken = await this.questionAccessService.verifyToken(body.token)
             const question = await this.questionManagementService.findQuestionById(verifyToken.question)
-            const answer = this.cryptoService.encryptAES(JSON.stringify(body.answer))
+            const answer = await this.cryptoService.encryptAES(JSON.stringify(body.answer))
 
             // 학생 답안 저장
             await this.studentAnswerRepository.upsert(
@@ -42,13 +42,29 @@ export class StudentAnswerService {
 /** 학생의 답안 목록 보기 */
     async getStudentAnswerList(studentNumber:number, userId:number){
         const answerList = await this.studentAnswerRepository.find({where:{studentNumber, userId}, relations:["question"]})
-        const responseData = answerList.map(answer => ({
+        const responseData = await Promise.all(answerList.map(async answer => ({
             id: answer.id,
-            correctAnswer: JSON.parse(this.cryptoService.decryptAES(answer.question.encryptedCorrectAnswer, answer.question.ivCorrectAnswer)),
-            answerSheet: JSON.parse(this.cryptoService.decryptAES(answer.question.encryptedAnswerSheets,answer.question.ivAnswerSheets)),
+            correctAnswer: JSON.parse(
+                await this.cryptoService.decryptAES(
+                    answer.question.encryptedCorrectAnswer, 
+                    answer.question.ivCorrectAnswer
+                )
+            ),
+            answerSheet: JSON.parse(
+                await this.cryptoService.decryptAES(
+                    answer.question.encryptedAnswerSheets,
+                    answer.question.ivAnswerSheets
+                )
+            ),
             title: answer.question.title,
-            studentAnswer: JSON.parse(this.cryptoService.decryptAES(answer.encryptedAnswer, answer.ivAnswer))
-          }));
-          return responseData
+            studentAnswer: JSON.parse(
+                await this.cryptoService.decryptAES(
+                    answer.encryptedAnswer, 
+                    answer.ivAnswer
+                )
+            )
+        })));
+       
+        return responseData
         }
     }

@@ -6,9 +6,14 @@ import { TiktokenModel } from 'tiktoken';
 
 @Injectable()
 export class LlmApiService {
+    private modelConfig: Readonly<{
+        apiKey: string;
+        apiUrl: string;
+        model: TiktokenModel;
+    }>;
     constructor(
         private readonly configService: ConfigService,
-        private readonly authenticationService : AuthenticationService
+        private readonly authenticationService : AuthenticationService,
     ) {}
 
     // LLM에 프롬프트 전송
@@ -35,13 +40,18 @@ export class LlmApiService {
             return response.data.choices[0]?.message?.content ?? '';
     }
 
-    async loadLlmModelInfo(){
-        const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-        const apiUrl = this.configService.get<string>("OPENAI_URL");
-        const model = this.configService.get<TiktokenModel>("LLM_MODEL");
-        return {apiKey, apiUrl, model}
+    async onModuleInit() {
+        // 초기화 시 한 번만 구성 로드하고 불변 객체로 만들기
+        this.modelConfig = Object.freeze({
+            apiKey: this.configService.get<string>("OPENAI_API_KEY"),
+            apiUrl: this.configService.get<string>("OPENAI_URL"),
+            model: this.configService.get<TiktokenModel>("LLM_MODEL")
+        });
+    }
+
+    async loadLlmModelInfo() {
+        return this.modelConfig; // 캐시된 불변 설정 반환
+    }
 }
 
 
-
-}

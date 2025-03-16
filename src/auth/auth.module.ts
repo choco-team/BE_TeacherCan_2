@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { KakaoStrategy } from './kakao.strategy';
-import { UserModule } from '../user/user.module';
-import { SessionSerializer } from './session.serializer';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/db/entities/user.entity';
 import { HttpModule } from '@nestjs/axios';
@@ -20,12 +18,11 @@ import { OauthService } from './oauth.service';
 @Module({
   imports: [ TypeOrmModule.forFeature([User, Session, RsaKey]),
   PassportModule.register({ session: true }),
-  UserModule,
   CryptoModule,
   HttpModule],
   controllers: [AuthController],
-  providers: [KakaoStrategy, SessionSerializer, CryptoService, AuthenticationService, SessionService, OauthService, AuthGuard, RolesGuard],
-  exports: [AuthGuard, RolesGuard, AuthenticationService, SessionService, TypeOrmModule.forFeature([User, Session, RsaKey])]
+  providers: [KakaoStrategy, CryptoService, AuthenticationService, SessionService, OauthService, AuthGuard, RolesGuard],
+  exports: [AuthGuard, RolesGuard, AuthenticationService]
 })
 export class AuthModule {}
 

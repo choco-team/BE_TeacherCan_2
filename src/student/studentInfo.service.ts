@@ -16,7 +16,8 @@ export class StudentInfoService {
     /** 🔹 학생 정보 가져오기 (복호화) */
     async getStudentInfo(userId: number) {
         const user = await this.authenticationService.findUserById(userId)
-        const decryptedStudentInfo:studentInterface = JSON.parse(this.cryptoService.decryptAES(user.encryptedStudentInfo, user.ivStudentInfo));
+        const decryptedStudentInfoString = await this.cryptoService.decryptAES(user.encryptedStudentInfo, user.ivStudentInfo)
+        const decryptedStudentInfo:studentInterface = JSON.parse(decryptedStudentInfoString);
 
         return decryptedStudentInfo;
     }
@@ -36,7 +37,7 @@ export class StudentInfoService {
        const user = await this.authenticationService.findUserById(userId)
        
         // 학생 정보를 암호화하여 저장
-        const encryptedStudentInfo = this.cryptoService.encryptAES(JSON.stringify(data));
+        const encryptedStudentInfo = await this.cryptoService.encryptAES(JSON.stringify(data));
         user.encryptedStudentInfo = encryptedStudentInfo.encryptedData;
         user.ivStudentInfo = encryptedStudentInfo.iv
 
@@ -47,7 +48,7 @@ export class StudentInfoService {
     async getStudentInfoForInput(token: string) {
                const verifyToken:decodedQuestionToken = await this.questionAccessService.verifyToken(token);       
                const userData = await this.authenticationService.findUserById(verifyToken.user);
-               const StudentInfo = JSON.parse(this.cryptoService.decryptAES(userData.encryptedStudentInfo, userData.ivStudentInfo));
+               const StudentInfo = await this.getStudentInfo(userData.id);
         return StudentInfo;
     }
 
