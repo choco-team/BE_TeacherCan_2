@@ -15,10 +15,11 @@ import { TokenService } from './token.service';
 import { QuestionManagementService } from 'src/question/questionManagement.service';
 import { SessionService } from 'src/auth/session.service';
 import { AnswerSheetService } from 'src/question/answerSheet.service';
+import { AuthenticationService } from 'src/auth/authentication.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, TokenUsage, Question, Session, StudentAnswer, RsaKey])],
   controllers: [LlmController ],
-  providers: [LlmService, CryptoService, LlmApiService, PromptService, TokenService, QuestionManagementService, SessionService, AnswerSheetService]
+  providers: [LlmService, CryptoService, LlmApiService, PromptService, TokenService, QuestionManagementService, SessionService, AnswerSheetService, AuthenticationService]
 })
 export class LlmModule {}

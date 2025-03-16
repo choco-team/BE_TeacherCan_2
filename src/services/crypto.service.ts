@@ -15,8 +15,10 @@ export  class CryptoService {
 
      constructor(
         @InjectRepository(RsaKey)
-        private readonly rsaRepo: Repository<RsaKey>,
-    ) {
+        private readonly rsaKeyRepository: Repository<RsaKey>,
+    )
+    
+    {
         this.initialize(); // 🔹 서버 시작 시 AES 키 복호화하여 로드
     }
 
@@ -26,7 +28,7 @@ export  class CryptoService {
 
     /** 🔹 서버 실행 시 RSA 공개키가 DB에 없으면 생성하여 저장 */
     async ensureRSAKeyExists() {
-        const existingKey = await this.rsaRepo.findOne({
+        const existingKey = await this.rsaKeyRepository.findOne({
             where: {}, // 🔹 모든 데이터를 대상으로 정렬
             order: { createdAt: 'DESC' } // 🔹 가장 최신 키 조회
         });
@@ -42,7 +44,7 @@ export  class CryptoService {
 
                 
             // 공개키를 DB에 저장
-            await this.rsaRepo.save({ publicKey, keyVersion: 'v1' });
+            await this.rsaKeyRepository.save({ publicKey, keyVersion: 'v1' });
             console.log('✅ RSA 공개키가 생성되어 DB에 저장되었습니다.');
         } else {
             console.log('🔹 RSA 공개키가 이미 존재합니다.');
@@ -54,7 +56,7 @@ export  class CryptoService {
         if (!fs.existsSync(AES_KEY_PATH)) {
             console.log('🔹 AES 키를 생성하고 암호화 중...');
 
-            const rsaKey = await this.rsaRepo.findOne({where: {}, order:{createdAt:'DESC'}});
+            const rsaKey = await this.rsaKeyRepository.findOne({where: {}, order:{createdAt:'DESC'}});
             if (!rsaKey) throw new Error('RSA 공개키가 없습니다.');
 
             const aesKey = Buffer.from(require('crypto').randomBytes(32)); // 256비트 AES 키

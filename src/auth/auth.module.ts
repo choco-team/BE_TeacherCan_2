@@ -25,7 +25,7 @@ import { OauthService } from './oauth.service';
   HttpModule],
   controllers: [AuthController],
   providers: [KakaoStrategy, SessionSerializer, CryptoService, AuthenticationService, SessionService, OauthService, AuthGuard, RolesGuard],
-  exports: [AuthGuard, RolesGuard, AuthenticationService, SessionService]
+  exports: [AuthGuard, RolesGuard, AuthenticationService, SessionService, TypeOrmModule.forFeature([User, Session, RsaKey])]
 })
 export class AuthModule {}
 
