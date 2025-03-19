@@ -3,7 +3,6 @@ import { QuestionController } from './question.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Subject } from 'src/db/entities/subject.entity';
 import { Question } from 'src/db/entities/question.entity';
-import { CryptoService } from 'src/services/crypto.service';
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
 import { QuestionManagementService } from './questionManagement.service';
 import { AnswerSheetService } from './answerSheet.service';
@@ -14,9 +13,9 @@ import { AuthModule } from 'src/auth/auth.module';
 import { User } from 'src/db/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Subject, Question, StudentAnswer, User]), CryptoModule, AuthModule, QuestionModule],
+  imports: [TypeOrmModule.forFeature([Subject, Question, StudentAnswer, User]), CryptoModule, AuthModule, QuestionModule, CryptoModule],
   controllers: [QuestionController],
-  providers: [CryptoService, QuestionManagementService, AnswerSheetService, QuestionAccessService, AuthenticationService],
+  providers: [QuestionManagementService, AnswerSheetService, QuestionAccessService, AuthenticationService],
   exports: [QuestionManagementService, AnswerSheetService, QuestionAccessService]
 })
 export class QuestionModule {}

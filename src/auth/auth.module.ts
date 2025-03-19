@@ -10,19 +10,19 @@ import { AuthGuard } from './auth.guard';
 import { RolesGuard } from './role.guard';
 import { CryptoModule } from 'src/services/crypto.module';
 import { CryptoService } from 'src/services/crypto.service';
-import { RsaKey } from 'src/db/entities/rsaKey.entity';
 import { AuthenticationService } from './authentication.service';
 import { SessionService } from './session.service';
 import { OauthService } from './oauth.service';
+import { AuthService } from './auth.service';
 
 @Module({
-  imports: [ TypeOrmModule.forFeature([User, Session, RsaKey]),
+  imports: [ TypeOrmModule.forFeature([User, Session]),
   PassportModule.register({ session: true }),
   CryptoModule,
   HttpModule],
   controllers: [AuthController],
-  providers: [KakaoStrategy, CryptoService, AuthenticationService, SessionService, OauthService, AuthGuard, RolesGuard],
-  exports: [AuthGuard, RolesGuard, AuthenticationService, SessionService]
+  providers: [KakaoStrategy, CryptoService, AuthenticationService, SessionService, OauthService, AuthGuard, RolesGuard, AuthService],
+  exports: [AuthGuard, RolesGuard, AuthenticationService, SessionService, AuthService]
 })
 export class AuthModule {}
 
