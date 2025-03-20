@@ -1,0 +1,1 @@
+export const DEFAULT_TOKEN = 1000000

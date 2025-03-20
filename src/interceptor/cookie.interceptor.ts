@@ -15,8 +15,8 @@ export class CookieInterceptor implements NestInterceptor {
         if (request.sessionId) {
           response.cookie('sessionId', request.sessionId, {
             httpOnly: true,
-            secure: !process.env.LOCAL,
-            sameSite: 'strict',
+            secure: process.env.LOCAL!=='true',
+            sameSite: 'none',
             maxAge: 1000 * 60 * 60 * 24 * 7, // 7일 유지
           });
         }

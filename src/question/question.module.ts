@@ -1,17 +1,21 @@
 import { Module } from '@nestjs/common';
 import { QuestionController } from './question.controller';
-import { QuestionService } from './question.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Subject } from 'src/db/entities/subject.entity';
 import { Question } from 'src/db/entities/question.entity';
-import { Session } from 'src/db/entities/session.entity';
+import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
+import { QuestionManagementService } from './questionManagement.service';
+import { AnswerSheetService } from './answerSheet.service';
+import { QuestionAccessService } from './questionAccess.service';
+import { AuthenticationService } from 'src/auth/authentication.service';
 import { CryptoModule } from 'src/services/crypto.module';
-import { CryptoService } from 'src/services/crypto.service';
-import { RsaKey } from 'src/db/entities/rsaKey.entity';
+import { AuthModule } from 'src/auth/auth.module';
+import { User } from 'src/db/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Session, Subject, Question, RsaKey])],
+  imports: [TypeOrmModule.forFeature([Subject, Question, StudentAnswer, User]), CryptoModule, AuthModule, QuestionModule, CryptoModule],
   controllers: [QuestionController],
-  providers: [QuestionService, CryptoService]
+  providers: [QuestionManagementService, AnswerSheetService, QuestionAccessService, AuthenticationService],
+  exports: [QuestionManagementService, AnswerSheetService, QuestionAccessService]
 })
 export class QuestionModule {}

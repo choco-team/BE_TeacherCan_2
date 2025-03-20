@@ -1,9 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppDataSource } from './db/AppDataSource';
 import { AuthModule } from './auth/auth.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
 import { SubjectModule } from './subject/subject.module';
 import { QuestionModule } from './question/question.module';
 import { ConfigModule } from '@nestjs/config';
@@ -12,22 +10,14 @@ import { AuthGuard } from './auth/auth.guard';
 import { RolesGuard } from './auth/role.guard';
 import { StudentModule } from './student/student.module';
 import { LlmModule } from './llm/llm.module';
-import { RsaKey } from './db/entities/rsaKey.entity';
-import { Question } from './db/entities/question.entity';
-import { StudentAnswer } from './db/entities/studentAnswer.entity';
-import { User } from './db/entities/user.entity';
-import { CryptoModule } from './services/crypto.module';
-import { CryptoService } from './services/crypto.service';
+import { MusicModule } from './music/music.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { CsrfInterceptor } from './interceptor/csrf.interceptor';
+import { CsrfMiddleware } from './middleware/csrf.middleware';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(AppDataSource.options), // AppDataSource 적용
-    TypeOrmModule.forFeature([RsaKey, Question, StudentAnswer, User]),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'front'),
-      serveRoot: '/', // ✅ 루트 경로에서 정적 파일 서빙
-      exclude: ['/api*'], // ✅ API 요청 제외 (API는 /api 경로에서 제공)
-    }),
     AuthModule, // ✅ `AuthModule`을 통해 `AuthGuard`, `RolesGuard` 제공
     SubjectModule,
     QuestionModule,
@@ -36,8 +26,9 @@ import { CryptoService } from './services/crypto.service';
     }),
     StudentModule,
     LlmModule,
+    MusicModule,
   ],
-  providers: [CryptoModule,CryptoService,
+  providers: [
     {
       provide: APP_GUARD,
       useClass: AuthGuard, // ✅ `AuthGuard`가 `AuthModule`에서 해결 가능
@@ -46,6 +37,14 @@ import { CryptoService } from './services/crypto.service';
       provide: APP_GUARD,
       useClass: RolesGuard, // ✅ `RolesGuard`도 `AuthModule`을 통해 해결 가능
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CsrfInterceptor,
+    }
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CsrfMiddleware).forRoutes('*');
+  }
+}
