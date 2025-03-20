@@ -1,7 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { RsaKey } from '../db/entities/rsaKey.entity';
 import * as crypto from 'crypto';
 
 
@@ -10,8 +7,6 @@ export  class CryptoService {
     private aesKey: Buffer; // 🔹 AES 키 저장
 
      constructor(
-        @InjectRepository(RsaKey)
-        private readonly rsaKeyRepository: Repository<RsaKey>,
     ) {}
 
     async onModuleInit() {
