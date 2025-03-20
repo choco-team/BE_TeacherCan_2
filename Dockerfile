@@ -1,6 +1,6 @@
 # 1. Node.js 베이스 이미지 사용
 FROM node:20
-
+RUN npm install -g @nestjs/cli
 # 2. 작업 디렉토리 설정
 WORKDIR /app
 
