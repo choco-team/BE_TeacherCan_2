@@ -86,19 +86,21 @@ jobs:
           PORT=${{ secrets.PORT }}
           EOL"
          
-          # 파일 권한 설정
-          sudo chmod 600 $ENV_PATH/.env
-         
-          # 도커 컨테이너에 환경 변수 파일을 루트 디렉토리에 마운트하여 실행
+          sudo mkdir -p $ENV_PATH/ssl
+          sudo cp /etc/letsencrypt/live/api.teachercan.com/fullchain.pem $ENV_PATH/ssl/
+          sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/
+          sudo chmod 644 $ENV_PATH/ssl/fullchain.pem
+          sudo chmod 600 $ENV_PATH/ssl/privkey.pem         
+          
+          # Docker 실행 시 이 디렉토리를 마운트
           docker run -d \
-          --name $CONTAINER_NAME \
-          -p $PORT_MAPPING \
-          -p 443:443 \
-          -v $ENV_PATH/.env:/.env:ro \
-          -v /etc/letsencrypt/live/api.teachercan.com/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro \
-          -v /etc/letsencrypt/live/api.teachercan.com/privkey.pem:/etc/nginx/ssl/privkey.pem:ro \
-          --restart always \
-          ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
-           
+            --name $CONTAINER_NAME \
+            -p $PORT_MAPPING \
+            -p 443:443 \
+            -v $ENV_PATH/.env:/.env:ro \
+            -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
+            --restart always \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}           
+            
           # 사용하지 않는 이미지 정리
           docker image prune -a -f
