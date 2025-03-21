@@ -8,3 +8,7 @@ services:
       - "5000:3000"
     env_file:
       - .env
+    volumes:
+      # ... 기존 볼륨 ...
+      - /etc/letsencrypt/live/api.teachercan.com:/etc/nginx/ssl/live/api.teachercan.com
+      - /etc/letsencrypt/archive/api.teachercan.com:/etc/nginx/ssl/archive/api.teachercan.com
