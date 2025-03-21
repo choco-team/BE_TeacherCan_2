@@ -1,33 +1,44 @@
 name: Docker CI/CD
-
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]  # main과 dev 브랜치 모두 워크플로우 트리거
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
+    # 브랜치에 따라 환경 선택
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'test' }}
+   
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    
+   
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
-    
+   
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-    
+   
+    - name: Set Docker tag
+      id: set-tag
+      run: |
+        if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
+          echo "TAG=latest" >> $GITHUB_OUTPUT
+        else
+          echo "TAG=dev" >> $GITHUB_OUTPUT
+        fi
+   
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
         context: .
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:latest
-    
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+   
     - name: Deploy to GCP VM
       uses: appleboy/ssh-action@master
       with:
@@ -35,16 +46,30 @@ jobs:
         username: ${{ secrets.GCP_VM_USERNAME }}
         key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
         script: |
+          # 컨테이너 이름과 포트 설정
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            CONTAINER_NAME="nginx-app"
+            PORT_MAPPING="80:80"
+          else
+            CONTAINER_NAME="nginx-app-test"
+            PORT_MAPPING="8080:80"  # 테스트 환경은 8080 포트 사용
+          fi
+          
           # 기존 컨테이너 중지 및 제거
-          docker stop nginx-app || true
-          docker rm nginx-app || true
-          
+          docker stop $CONTAINER_NAME || true
+          docker rm $CONTAINER_NAME || true
+         
           # 최신 이미지 가져오기
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:latest
-          
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+         
           # VM에 환경 변수 파일 생성/업데이트
-          sudo mkdir -p /opt/app
-          sudo bash -c 'cat > /opt/app/.env << EOL
+          ENV_PATH="/opt/app"
+          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
+            ENV_PATH="/opt/app-test"  # 테스트 환경은 별도 디렉토리 사용
+          fi
+          
+          sudo mkdir -p $ENV_PATH
+          sudo bash -c "cat > $ENV_PATH/.env << EOL
           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
           DATABASE_PORT=${{ secrets.DATABASE_PORT }}
           DATABASE_USER=${{ secrets.DATABASE_USER }}
@@ -59,18 +84,18 @@ jobs:
           LLM_MODEL=${{ secrets.LLM_MODEL }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           PORT=${{ secrets.PORT }}
-          EOL'
-          
+          EOL"
+         
           # 파일 권한 설정
-          sudo chmod 600 /opt/app/.env
-          
+          sudo chmod 600 $ENV_PATH/.env
+         
           # 도커 컨테이너에 환경 변수 파일을 루트 디렉토리에 마운트하여 실행
           docker run -d \
-            --name nginx-app \
-            -p 80:80 \
-            -v /opt/app/.env:/.env:ro \
+            --name $CONTAINER_NAME \
+            -p $PORT_MAPPING \
+            -v $ENV_PATH/.env:/.env:ro \
             --restart always \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:latest
-            
+            ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+           
           # 사용하지 않는 이미지 정리
           docker image prune -a -f
