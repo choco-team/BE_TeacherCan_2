@@ -19,7 +19,7 @@ app.enableCors({
   credentials: true,
 });
 
-if (process.env.LOCAL==="true"){
+if (isLocal){
   // Swagger 설정
   const config = new DocumentBuilder()
     .setTitle('API 문서') // 문서 제목
@@ -43,6 +43,6 @@ if (process.env.LOCAL==="true"){
   // ✅ 글로벌 파이프 설정 (DTO 유효성 검사)
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.SERVER_PORT ?? 3000);
 }
 bootstrap();

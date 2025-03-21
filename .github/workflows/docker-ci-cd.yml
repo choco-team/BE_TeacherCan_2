@@ -83,7 +83,7 @@ jobs:
           OPENAI_URL=${{ secrets.OPENAI_URL }}
           LLM_MODEL=${{ secrets.LLM_MODEL }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
-          PORT=${{ secrets.PORT }}
+          SERVER_PORT=${{ secrets.SERVER_PORT }}
           EOL"
          
           sudo mkdir -p $ENV_PATH/ssl
