@@ -18,7 +18,7 @@ RUN npm run build
 RUN mkdir -p /etc/nginx/ssl/live/api.teachercan.com
 
 # SSL 설정이 포함된 Nginx 설정 파일 복사
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY /nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # 6. 포트 설정
 EXPOSE 3000
