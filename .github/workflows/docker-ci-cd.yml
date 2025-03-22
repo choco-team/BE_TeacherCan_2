@@ -86,6 +86,7 @@ jobs:
           LLM_MODEL=${{ secrets.LLM_MODEL }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           SERVER_PORT=${{ secrets.SERVER_PORT }}
+          AES_KEY=${{ secrets.AES_KEY }}
           EOL"
          
           # SSL 설정 (프로덕션 환경일 경우만)

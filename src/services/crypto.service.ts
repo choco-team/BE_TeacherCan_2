@@ -16,12 +16,16 @@ export  class CryptoService {
     }
 
 
-    /** 🔹 AES 키 복호화하여 로드 */
-    private async decryptAESKey(): Promise<Buffer> {
-        const AES_KEY = process.env.AES_KEY
-        return Buffer.from(AES_KEY, 'base64') ;
+/** 🔹 AES 키 복호화하여 로드 */
+private async decryptAESKey(): Promise<Buffer> {
+    const AES_KEY = process.env.AES_KEY;
+    
+    if (!AES_KEY) {
+        throw new Error('환경 변수 AES_KEY가 설정되지 않았습니다. openssl rand -base64 32 명령으로 키를 생성하고 환경 변수를 설정하세요.');
     }
-
+    
+    return Buffer.from(AES_KEY, 'base64');
+}
     async getAesKey(): Promise<Buffer> {
         if (!this.aesKey) {
             this.aesKey = await this.decryptAESKey();
