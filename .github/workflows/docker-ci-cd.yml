@@ -49,7 +49,7 @@ jobs:
           if [[ "${{ secrets.LOCAL }}" == "true" ]]; then
             # 테스트 환경 (LOCAL=true)
             CONTAINER_NAME="nginx-app-test"
-            PORT_MAPPING="8080:80"
+            PORT_MAPPING="80:80"
             ENV_PATH="/opt/app-test"
             USE_SSL=false
             echo "Deploying to TEST environment (LOCAL=true)"
