@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
-import { ConfigModule } from '@nestjs/config';
+import * as dotenv from 'dotenv';
+import * as fs from 'fs';
 import { Question } from './entities/question.entity';
 import { User } from './entities/user.entity';
 import { Subject } from './entities/subject.entity';
@@ -11,7 +12,19 @@ import { Room } from './entities/room.entity';
 import { Student } from './entities/student.entity';
 import { Music } from './entities/music.entity';
 
-ConfigModule.forRoot(); // 환경 변수 로드
+// 독립적으로 환경 변수 로드
+try {
+  if (fs.existsSync('/.env')) {
+    dotenv.config({ path: '/.env' });
+    console.log('Environment variables loaded directly in AppDataSource');
+  }
+} catch (error) {
+  console.error('Error loading .env file:', error);
+}
+
+// 환경 변수 로그
+console.log('DATABASE_HOST from env:', process.env.DATABASE_HOST);
+console.log('Using host:', process.env.DATABASE_HOST || 'localhost');
 
 export const AppDataSource = new DataSource({
   type: 'mysql', // 또는 'mariadb'
@@ -20,14 +33,10 @@ export const AppDataSource = new DataSource({
   username: process.env.DATABASE_USER || 'root',
   password: process.env.DATABASE_PASSWORD || 'yourpassword',
   database: process.env.DATABASE_NAME || 'mydatabase',
-  entities: [Question, User, Subject, Session, StudentAnswer, TokenUsage, RsaKey, Room, Student, Music], // 엔티티 자동 로드
+  entities: [Question, User, Subject, Session, StudentAnswer, TokenUsage, RsaKey, Room, Student, Music],
   synchronize: process.env.LOCAL === 'true',
-  logging: process.env.LOCAL === 'true', // 개발 환경에서만 로그 활성화
+  logging: process.env.LOCAL === 'true',
   extra: {
     authPlugins: 'caching_sha2_password'
   }
-}
-);
-
-console.log('DATABASE_HOST from env:', process.env.DATABASE_HOST);
-console.log('Using host:', process.env.DATABASE_HOST || 'localhost');
+});
