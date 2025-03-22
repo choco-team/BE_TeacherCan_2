@@ -7,7 +7,6 @@ import { Subject } from './entities/subject.entity';
 import { Session } from './entities/session.entity';
 import { StudentAnswer } from './entities/studentAnswer.entity';
 import { TokenUsage } from './entities/tokenUsage.entity';
-import { RsaKey } from './entities/rsaKey.entity';
 import { Room } from './entities/room.entity';
 import { Student } from './entities/student.entity';
 import { Music } from './entities/music.entity';
@@ -33,7 +32,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DATABASE_USER || 'root',
   password: process.env.DATABASE_PASSWORD || 'yourpassword',
   database: process.env.DATABASE_NAME || 'mydatabase',
-  entities: [Question, User, Subject, Session, StudentAnswer, TokenUsage, RsaKey, Room, Student, Music],
+  entities: [Question, User, Subject, Session, StudentAnswer, TokenUsage, Room, Student, Music],
   synchronize: process.env.LOCAL === 'true',
   logging: process.env.LOCAL === 'true',
   extra: {

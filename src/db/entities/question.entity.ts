@@ -35,7 +35,7 @@ export class Question {
     @Column({type:"varchar", length:255})
     ivCommentId: string;  
 
-    @CreateDateColumn({ type: 'timestamp', nullable: false })
+    @CreateDateColumn()
     createdAt: Date;
 
     @Column({ type: "uuid", unique: true })
