@@ -24,4 +24,4 @@ COPY /nginx/default.conf /etc/nginx/conf.d/default.conf
 EXPOSE 3000
 
 # 7. 실행 명령어
-CMD ["node", "dist/main"]
+CMD ["npm", "start"]

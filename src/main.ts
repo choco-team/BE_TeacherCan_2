@@ -43,6 +43,6 @@ if (isLocal){
   // ✅ 글로벌 파이프 설정 (DTO 유효성 검사)
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
-  await app.listen(process.env.SERVER_PORT ?? 3000);
+  await app.listen(Number(process.env.SERVER_PORT) ?? 3000);
 }
 bootstrap();
