@@ -23,6 +23,8 @@ import { CsrfMiddleware } from './middleware/csrf.middleware';
     QuestionModule,
     ConfigModule.forRoot({
       isGlobal: true, // ✅ 전역 사용 가능하도록 설정
+      envFilePath: '/.env', // 루트 디렉토리의 .env 파일
+      ignoreEnvFile: false, // .env 파일을 무시하지 않음
     }),
     StudentModule,
     LlmModule,
