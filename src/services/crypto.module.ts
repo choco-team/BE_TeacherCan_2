@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RsaKey } from '../db/entities/rsaKey.entity';
 import { CryptoService } from '../services/crypto.service';
 
 @Module({

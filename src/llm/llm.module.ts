@@ -7,7 +7,6 @@ import { Session } from 'src/db/entities/session.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StudentAnswer } from 'src/db/entities/studentAnswer.entity';
 import { User } from 'src/db/entities/user.entity';
-import { RsaKey } from 'src/db/entities/rsaKey.entity';
 import { LlmApiService } from './llmApi.service';
 import { PromptService } from './prompt.service';
 import { TokenService } from './token.service';
