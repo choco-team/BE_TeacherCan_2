@@ -26,4 +26,8 @@ export const AppDataSource = new DataSource({
   extra: {
     authPlugins: 'caching_sha2_password'
   }
-});
+}
+);
+
+console.log('DATABASE_HOST from env:', process.env.DATABASE_HOST);
+console.log('Using host:', process.env.DATABASE_HOST || 'localhost');
