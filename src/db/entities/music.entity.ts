@@ -19,7 +19,7 @@ export class Music {
   @Column({ type: "varchar", length: 255, nullable: true })
   title?: string;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   timeStamp: Date;
 
   @ManyToOne(() => Student, (student) => student.id, { onDelete: "CASCADE", onUpdate: "CASCADE" })

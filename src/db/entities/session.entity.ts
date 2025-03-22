@@ -13,6 +13,6 @@ export class Session {
   @JoinColumn({ name: 'userId' }) // ✅ userId 컬럼 명시적 지정
   user: User;
 
-  @CreateDateColumn({ type: 'timestamp', nullable: false })
+  @CreateDateColumn()
   createdAt: Date;
 }

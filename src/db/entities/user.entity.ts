@@ -19,7 +19,7 @@ export class User {
   @Column({type:"varchar", length:255})
   ivOauthId: string;
 
-  @CreateDateColumn({ type: 'timestamp', nullable: false })
+  @CreateDateColumn()
   createdAt: Date;
 
   @Column({ type: 'enum', enum: ['kakao', 'local', 'guest'] })
