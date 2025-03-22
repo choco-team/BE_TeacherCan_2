@@ -10,7 +10,7 @@ import { MusicStudentService } from './musicStudent.service';
 import { CryptoModule } from 'src/services/crypto.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Student, Music, Room, RsaKey]), CryptoModule],
+  imports: [TypeOrmModule.forFeature([Student, Music, Room]), CryptoModule],
   providers: [MusicInfoService, MusicRoomService, MusicStudentService],
   controllers: [MusicController]
 })
