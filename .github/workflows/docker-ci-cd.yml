@@ -105,6 +105,12 @@ jobs:
               
               echo "SSL certificates successfully configured for production."
               
+              # 이름에 'nginx'가 포함된 모든 컨테이너 찾아서 중지 및 제거
+              for container in $(docker ps -a --filter name=nginx -q); do
+                docker stop $container || true
+                docker rm $container || true
+              done
+
               # SSL이 포함된 Docker 실행
               docker run -d \
                 --name $CONTAINER_NAME \
