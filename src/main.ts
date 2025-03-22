@@ -23,7 +23,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   // CORS 설정하기
-  const isLocal = process.env.LOCAL === 'true';
+  const isLocal = process.env.LOCAL;
   app.enableCors({
     origin: isLocal
       ? ['http://localhost:3000']  // 개발 환경
