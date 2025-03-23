@@ -22,15 +22,16 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
   
-  // CORS 설정하기
-  const isLocal = process.env.LOCAL;
-  app.enableCors({
-    origin: isLocal
-      ? ['http://localhost:3000']  // 개발 환경
-      : ['https://www.teachercan.com'], // 배포 환경
-    credentials: true,
-  });
-  
+// CORS 설정하기
+const isLocal = process.env.LOCAL;
+app.enableCors({
+  origin: isLocal
+    ? ['http://localhost:3000']
+    : ['https://www.teachercan.com'],
+  credentials: true,
+  exposedHeaders: ['X-CSRF-Token']
+});  
+
   if (isLocal){
     // Swagger 설정
     const config = new DocumentBuilder()
