@@ -26,7 +26,7 @@ export class QuestionController {
       }
       
       @ApiOperation({summary: '문항 리스트 불러오기', description: '업로드한 문항의 목록을 20개씩 불러옵니다 (세션id 쿠키 필수)'})
-      @ApiResponse({description: '문항 목록을 가져옵니다', type: QuestionInfoResponseDto})
+      @ApiResponse({description: '문항 목록을 가져옵니다', type: QuestionInfoResponseDto , isArray: true})
       @Get("/list/:page/:subject?")
       @Roles("user")
       @ApiCookieAuth()

@@ -26,8 +26,8 @@ async function bootstrap() {
 const isLocal = process.env.LOCAL;
 app.enableCors({
   origin: isLocal
-    ? ['http://localhost:3000']
-    : ['https://www.teachercan.com'],
+    ? ['http://localhost:3000', 'http://test.teachercan.com']
+    : ['https://www.teachercan.com', 'https://api.teachercan.com'],
   credentials: true,
   exposedHeaders: ['X-CSRF-Token']
 });  
