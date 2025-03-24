@@ -4,6 +4,7 @@ import { Question } from 'src/db/entities/question.entity';
 import { questionDataDto } from 'src/dto/question.dto';
 import { Repository } from 'typeorm'
 import { CryptoService } from 'src/services/crypto.service';
+import { Subject } from 'src/db/entities/subject.entity';
 
 @Injectable()
 export class QuestionManagementService {
@@ -14,7 +15,7 @@ export class QuestionManagementService {
     ){}
 
 
-   async  postQuestionOnDB(question:questionDataDto){
+   async  postQuestionOnDB(question:questionDataDto, subject:Subject){
      const newQuestion =  this.questionRepository.create()
      const content = await this.cryptoService.encryptAES(question.content)
      const comment = await this.cryptoService.encryptAES(question.comment)
@@ -29,6 +30,7 @@ export class QuestionManagementService {
      newQuestion.ivAnswerSheets = answerSheet.iv
      newQuestion.encryptedCorrectAnswer = correctAnswer.encryptedData        
      newQuestion.ivCorrectAnswer = correctAnswer.iv
+     newQuestion.subjectsId = subject.id
      return newQuestion
     }
 
