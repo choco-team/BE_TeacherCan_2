@@ -106,10 +106,10 @@ export class QuestionManagementService {
         const question = await this.questionRepository.findOne({ where: { id:questionId }, relations: ["subject"] });
         if (!question) throw new HttpException("문항을 찾을 수 없습니다", HttpStatus.NOT_FOUND)
     
-        const content = question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
-        const comment = question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null;
-        const answerSheet = question.encryptedAnswerSheets ? await this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets) : null;
-        const correctAnswer = question.encryptedCorrectAnswer ? await this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer) : null;
+        const content = question.encryptedContent ? await this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
+        const comment = question.encryptedComment ? await this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null;
+        const answerSheet = question.encryptedAnswerSheets ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null;
+        const correctAnswer = question.encryptedCorrectAnswer ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null;
     
         const questionData = {
             title: question.title,
