@@ -4,7 +4,7 @@ import { Question } from 'src/db/entities/question.entity';
 import { questionDataDto } from 'src/dto/question.dto';
 import { Repository } from 'typeorm'
 import { CryptoService } from 'src/services/crypto.service';
-import { Subject } from 'src/db/entities/subject.entity';
+import type { Subject } from 'src/db/entities/subject.entity';
 
 @Injectable()
 export class QuestionManagementService {
@@ -15,7 +15,7 @@ export class QuestionManagementService {
     ){}
 
 
-   async  postQuestionOnDB(question:questionDataDto){
+   async  postQuestionOnDB(question:questionDataDto, subject:Subject){
      const newQuestion =  this.questionRepository.create()
      const content = await this.cryptoService.encryptAES(question.content)
      const comment = await this.cryptoService.encryptAES(question.comment)
@@ -30,10 +30,12 @@ export class QuestionManagementService {
      newQuestion.ivAnswerSheets = answerSheet.iv
      newQuestion.encryptedCorrectAnswer = correctAnswer.encryptedData        
      newQuestion.ivCorrectAnswer = correctAnswer.iv
+     newQuestion.title = question.title
+     newQuestion.subjectsId = subject.id
      return newQuestion
     }
 
-    async modifiedQuestionOnDB(question:questionDataDto){
+    async modifiedQuestionOnDB(question:questionDataDto, subject:Subject){
         const loadQuestion = await this.findQuestionById(question.id)
         const content = await this.cryptoService.encryptAES(question.content)
         const comment = await this.cryptoService.encryptAES(question.comment)
@@ -48,6 +50,8 @@ export class QuestionManagementService {
         loadQuestion.ivAnswerSheets = answerSheet.iv
         loadQuestion.encryptedCorrectAnswer = correctAnswer.encryptedData        
         loadQuestion.ivCorrectAnswer = correctAnswer.iv
+        loadQuestion.title = question.title
+        loadQuestion.subjectsId = subject.id
         return loadQuestion
     }
 
