@@ -108,8 +108,8 @@ export class QuestionManagementService {
     
         const content = question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
         const comment = question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null;
-        const answerSheet = question.encryptedAnswerSheets ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null;
-        const correctAnswer = question.encryptedCorrectAnswer ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null;
+        const answerSheet = question.encryptedAnswerSheets ? await this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets) : null;
+        const correctAnswer = question.encryptedCorrectAnswer ? await this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer) : null;
     
         const questionData = {
             title: question.title,
