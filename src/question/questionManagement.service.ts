@@ -103,7 +103,7 @@ export class QuestionManagementService {
     }
     
     async loadQuestionOnDB(questionId) {
-        const question = await this.questionRepository.findOne({ where: { id:questionId }, relations: ["subjects"] });
+        const question = await this.questionRepository.findOne({ where: { id:questionId }, relations: ["subject"] });
         if (!question) throw new HttpException("문항을 찾을 수 없습니다", HttpStatus.NOT_FOUND)
     
         const content = question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
