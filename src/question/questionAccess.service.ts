@@ -1,6 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Subject } from 'src/db/entities/subject.entity';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from "jsonwebtoken";
 import { QuestionManagementService } from './questionManagement.service';
@@ -11,8 +9,6 @@ import { AnswerSheetService } from './answerSheet.service';
 @Injectable()
 export class QuestionAccessService {
     constructor(
-        @InjectRepository(Subject)
-
         private readonly subjectService: SubjectService,
         private readonly questionManagementService: QuestionManagementService,
         private readonly configService: ConfigService,
