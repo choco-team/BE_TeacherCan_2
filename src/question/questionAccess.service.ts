@@ -39,7 +39,7 @@ async getQuestionQRcode(id: number, userId: number) {
         { question: question.id, user: userId }, "1h")
 
     return {
-        url: `${this.configService.get<string>("SITE_URL")}student?token=${token}`
+        url: `${this.configService.get<string>("SITE_URL")}/student?token=${token}`
     };
 }
 
