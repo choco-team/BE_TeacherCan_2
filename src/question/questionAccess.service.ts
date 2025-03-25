@@ -35,7 +35,7 @@ async makeAccessToken(payload, expiresIn:string) {
 async getQuestionQRcode(id: number, userId: number) {
     const question = await this.questionManagementService.findQuestionById(id)
     await this.canAccessThis(question.subjectsId, userId)
-    const token = this.makeAccessToken(
+    const token = await this.makeAccessToken(
         { question: question.id, user: userId }, "1h")
 
     return {
