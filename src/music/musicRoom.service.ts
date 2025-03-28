@@ -34,7 +34,7 @@ const responseData = {roomTitle: room.roomTitle,
     studentList: studentList.map(student => student.name),
     musicList: musicList.map(music => ({
         musicId: music.musicId,
-        title: music.title,
+        roomTitle: music.title,
         student: studentList.find(student => student.id===music.studentId)?.name,
         timeStamp: music.timeStamp
         })
