@@ -20,7 +20,7 @@ export class MusicController {
             @ApiResponse( {description: "방 ID를 받아옵니다", type: RoomIdDto })
             async makeNewRoom(@Body("roomTitle") RoomTitle: string){
             return await this.musicRoomService.makeNewRoom(RoomTitle)
-            }
+            } 
 
             @Get('/room/title')
             @ApiOperation({summary: '방 제목 가져오기', description: '방 제목을 가져옵니다'})
