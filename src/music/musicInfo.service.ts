@@ -16,7 +16,7 @@ async getAllMusicInRoom(roomId){
   return await this.musicRepository.find({where: {roomId}})
 }
 
-async addMusicInRoom(roomId, musicId, title, student){
+async addMusicInRoom(roomId:string, musicId:string, title:string, student:string){
         const studentData = await this.musicStudentService.findStudentByNameAndRoomId(student, roomId)
         const findMusic = await this.musicRepository.find({where: {roomId, musicId}})
         if (findMusic.length===1) {throw new HttpException("이미 신청한 곡입니다", HttpStatus.CONFLICT)}
