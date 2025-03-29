@@ -14,27 +14,39 @@ constructor(
 ) {}
 
 
-async findStudentById(studentId){
-        const studentData = await this.studentRepository.findOne({where:{id:studentId}})
-        if (!studentData) {throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND)}
-        const encryptedStudent = this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName)
-        return {...studentData, name: encryptedStudent}           
+async findStudentById(studentId) {
+    const studentData = await this.studentRepository.findOne({where: {id: studentId}});
+    
+    if (!studentData) {
+        throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND);
+    }
+    
+    const decryptedName = await this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName);
+    return {...studentData, name: decryptedName};
 }
 
-async findStudentByNameAndRoomId(name, roomId){
-    const nameHash = this.cryptoService.hashData(name)
-    const studentData = await this.studentRepository.findOne({where:{nameHash, roomId}})
-    if (!studentData) {throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND)}
-    const decryptedStudent = this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName)
-    return  {...studentData, name:decryptedStudent}     
-}
 
-async findStudentInRoom(roomId){
-    const studentList = await this.studentRepository.find({where:{roomId}})
-    const decryptedStudentList = studentList.map(student => ({id: student.id , name:this.cryptoService.decryptAES(student.encryptedName, student.ivName)}));
-    return decryptedStudentList
+async findStudentByNameAndRoomId(name, roomId) {
+    const nameHash = this.cryptoService.hashData(name);
+    const studentData = await this.studentRepository.findOne({where: {nameHash, roomId}});
+    
+    if (!studentData) {
+        throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND);
+    }
+    
+    const decryptedStudent = await this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName);
+    return {...studentData, name: decryptedStudent};
 }
-
+async findStudentInRoom(roomId) {
+    const studentList = await this.studentRepository.find({where: {roomId}});
+    const decryptedStudentList = await Promise.all(
+        studentList.map(async student => ({
+            id: student.id, 
+            name: await this.cryptoService.decryptAES(student.encryptedName, student.ivName)
+        }))
+    );
+    return decryptedStudentList;
+}
 
 async addStudentInRoom(roomId, name){
     const {encryptedData, iv}= await this.cryptoService.encryptAES(name)
