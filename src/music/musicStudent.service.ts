@@ -25,14 +25,14 @@ async findStudentByNameAndRoomId(name, roomId){
     const nameHash = this.cryptoService.hashData(name)
     const studentData = await this.studentRepository.findOne({where:{nameHash, roomId}})
     if (!studentData) {throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND)}
-    const encryptedStudent = this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName)
-    return  {...studentData, name:encryptedStudent}     
+    const decryptedStudent = this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName)
+    return  {...studentData, name:decryptedStudent}     
 }
 
 async findStudentInRoom(roomId){
     const studentList = await this.studentRepository.find({where:{roomId}})
-    const encryptedStudentList = studentList.map(student => ({...student, name:this.cryptoService.decryptAES(student.encryptedName, student.ivName)}));
-    return encryptedStudentList
+    const decryptedStudentList = studentList.map(student => ({...student, name:this.cryptoService.decryptAES(student.encryptedName, student.ivName)}));
+    return decryptedStudentList
 }
 
 
@@ -40,7 +40,7 @@ async addStudentInRoom(roomId, name){
     const {encryptedData, iv}= await this.cryptoService.encryptAES(name)
     const nameHash = this.cryptoService.hashData(name)
     const findSameName = await this.studentRepository.find({where: {nameHash, roomId}})
-    if (findSameName.length !==0) {throw new HttpException("방에 이름이 중복됩니다", HttpStatus.CONFLICT)}
+    if (findSameName.length !==0) {throw new HttpException("방의 학생 이름이 중복됩니다", HttpStatus.CONFLICT)}
     const student = this.studentRepository.create({encryptedName:encryptedData,
         ivName: iv,
         nameHash,
