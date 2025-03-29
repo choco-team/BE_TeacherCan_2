@@ -31,7 +31,7 @@ async findStudentByNameAndRoomId(name, roomId){
 
 async findStudentInRoom(roomId){
     const studentList = await this.studentRepository.find({where:{roomId}})
-    const decryptedStudentList = studentList.map(student => ({...student, name:this.cryptoService.decryptAES(student.encryptedName, student.ivName)}));
+    const decryptedStudentList = studentList.map(student => ({name:this.cryptoService.decryptAES(student.encryptedName, student.ivName)}));
     return decryptedStudentList
 }
 
