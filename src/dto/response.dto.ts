@@ -10,16 +10,16 @@ export class UserIdResponseDto {
 
 export class QuestionInfoResponseDto {
   @ApiProperty({example: 1, description: "문항  고유ID"})  
-  id: number;
+  question_id: number;
 
   @ApiProperty({example: "수학", description: "과목이름"})  
-    name: string;
+  subject_name: string;
 
     @ApiProperty({example: "두 자리수의 덧셈 수행평가", description: "평가지 제목"})
-    title: string;
+    question_title: string;
     
     @ApiProperty({example: new Date(), description: "작성일"})
-    createdAt: Date;
+    question_createdAt: Date;
   }
   
   export class AnswerSheetResponseDto {

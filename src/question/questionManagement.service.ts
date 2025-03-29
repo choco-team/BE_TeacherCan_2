@@ -4,6 +4,7 @@ import { Question } from 'src/db/entities/question.entity';
 import { questionDataDto } from 'src/dto/question.dto';
 import { Repository } from 'typeorm'
 import { CryptoService } from 'src/services/crypto.service';
+import type { Subject } from 'src/db/entities/subject.entity';
 
 @Injectable()
 export class QuestionManagementService {
@@ -14,7 +15,7 @@ export class QuestionManagementService {
     ){}
 
 
-   async  postQuestionOnDB(question:questionDataDto){
+   async  postQuestionOnDB(question:questionDataDto, subject:Subject){
      const newQuestion =  this.questionRepository.create()
      const content = await this.cryptoService.encryptAES(question.content)
      const comment = await this.cryptoService.encryptAES(question.comment)
@@ -29,10 +30,12 @@ export class QuestionManagementService {
      newQuestion.ivAnswerSheets = answerSheet.iv
      newQuestion.encryptedCorrectAnswer = correctAnswer.encryptedData        
      newQuestion.ivCorrectAnswer = correctAnswer.iv
+     newQuestion.title = question.title
+     newQuestion.subjectsId = subject.id
      return newQuestion
     }
 
-    async modifiedQuestionOnDB(question:questionDataDto){
+    async modifiedQuestionOnDB(question:questionDataDto, subject:Subject){
         const loadQuestion = await this.findQuestionById(question.id)
         const content = await this.cryptoService.encryptAES(question.content)
         const comment = await this.cryptoService.encryptAES(question.comment)
@@ -47,6 +50,8 @@ export class QuestionManagementService {
         loadQuestion.ivAnswerSheets = answerSheet.iv
         loadQuestion.encryptedCorrectAnswer = correctAnswer.encryptedData        
         loadQuestion.ivCorrectAnswer = correctAnswer.iv
+        loadQuestion.title = question.title
+        loadQuestion.subjectsId = subject.id
         return loadQuestion
     }
 
@@ -98,11 +103,11 @@ export class QuestionManagementService {
     }
     
     async loadQuestionOnDB(questionId) {
-        const question = await this.questionRepository.findOne({ where: { id:questionId }, relations: ["subjects"] });
+        const question = await this.questionRepository.findOne({ where: { id:questionId }, relations: ["subject"] });
         if (!question) throw new HttpException("문항을 찾을 수 없습니다", HttpStatus.NOT_FOUND)
     
-        const content = question.encryptedContent ? this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
-        const comment = question.encryptedComment ? this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null;
+        const content = question.encryptedContent ? await this.cryptoService.decryptAES(question.encryptedContent, question.ivContentId) : null;
+        const comment = question.encryptedComment ? await this.cryptoService.decryptAES(question.encryptedComment, question.ivCommentId) : null;
         const answerSheet = question.encryptedAnswerSheets ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedAnswerSheets, question.ivAnswerSheets)) : null;
         const correctAnswer = question.encryptedCorrectAnswer ? JSON.parse(await this.cryptoService.decryptAES(question.encryptedCorrectAnswer, question.ivCorrectAnswer)) : null;
     

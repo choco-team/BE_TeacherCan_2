@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto,  } from 'src/dto/music.dto';
+import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomInformationDto, RoomTitleDto, StudentEntranceInfoDto,  } from 'src/dto/music.dto';
 import { MusicInfoService } from './musicInfo.service';
 import { MusicRoomService } from './musicRoom.service';
 import { MusicStudentService } from './musicStudent.service';
@@ -20,7 +20,7 @@ export class MusicController {
             @ApiResponse( {description: "방 ID를 받아옵니다", type: RoomIdDto })
             async makeNewRoom(@Body("roomTitle") RoomTitle: string){
             return await this.musicRoomService.makeNewRoom(RoomTitle)
-            }
+            } 
 
             @Get('/room/title')
             @ApiOperation({summary: '방 제목 가져오기', description: '방 제목을 가져옵니다'})
@@ -31,7 +31,7 @@ export class MusicController {
 
             @Get()
             @ApiOperation({summary: '방 상세 정보 가져오기', description: '방의 상세 정보를 가져옵니다'})
-            @ApiResponse( {description: "방의 상제 정보를 가져옵니다", type: RoomTitleDto})
+            @ApiResponse( {description: "방의 상제 정보를 가져옵니다", type: RoomInformationDto})
             async getRoomInfomation(@Query('roomId') roomId:string){
                 return await this.musicRoomService.getRoomInfomation(roomId)                
                 }

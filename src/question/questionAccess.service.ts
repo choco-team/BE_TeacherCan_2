@@ -1,6 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Subject } from 'src/db/entities/subject.entity';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from "jsonwebtoken";
 import { QuestionManagementService } from './questionManagement.service';
@@ -11,8 +9,6 @@ import { AnswerSheetService } from './answerSheet.service';
 @Injectable()
 export class QuestionAccessService {
     constructor(
-        @InjectRepository(Subject)
-
         private readonly subjectService: SubjectService,
         private readonly questionManagementService: QuestionManagementService,
         private readonly configService: ConfigService,
@@ -39,11 +35,11 @@ async makeAccessToken(payload, expiresIn:string) {
 async getQuestionQRcode(id: number, userId: number) {
     const question = await this.questionManagementService.findQuestionById(id)
     await this.canAccessThis(question.subjectsId, userId)
-    const token = this.makeAccessToken(
+    const token = await this.makeAccessToken(
         { question: question.id, user: userId }, "1h")
 
     return {
-        url: `${this.configService.get<string>("SITE_URL")}student?token=${token}`
+        url: `${this.configService.get<string>("SITE_URL")}/student?token=${token}`
     };
 }
 
@@ -72,12 +68,10 @@ async getAnswerPage(token: string) {
     const subject = await this.subjectService.findSubjectByName(question.subjectName, userId)
     
     if (!question.id){
-    const newQuestion = await this.questionManagementService.postQuestionOnDB(question)
-    newQuestion.subjectsId = subject.id
+    const newQuestion = await this.questionManagementService.postQuestionOnDB(question, subject)
     return await this.questionManagementService.saveQuestionOnDB(newQuestion)
     } else{
-    const modifiedQuestion = await this.questionManagementService.modifiedQuestionOnDB(question)
-    modifiedQuestion.subjectsId = subject.id
+    const modifiedQuestion = await this.questionManagementService.modifiedQuestionOnDB(question, subject)
     return await this.questionManagementService.saveQuestionOnDB(modifiedQuestion)
     }
     }

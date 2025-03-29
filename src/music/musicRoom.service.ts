@@ -16,7 +16,7 @@ constructor(
 
 
 async makeNewRoom(roomTitle){
-const newRoom = await this.roomRepository.create({roomTitle})
+const newRoom = this.roomRepository.create({roomTitle})
 const savedRoom = await this.roomRepository.save(newRoom)
 return {roomId: savedRoom.id}
 }
@@ -34,7 +34,7 @@ const responseData = {roomTitle: room.roomTitle,
     studentList: studentList.map(student => student.name),
     musicList: musicList.map(music => ({
         musicId: music.musicId,
-        title: music.title,
+        roomTitle: music.title,
         student: studentList.find(student => student.id===music.studentId)?.name,
         timeStamp: music.timeStamp
         })
