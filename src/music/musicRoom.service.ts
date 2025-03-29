@@ -31,7 +31,7 @@ const room = await this.roomRepository.findOne({where: {id: roomId}})
 const musicList = await this.musicInfoService.getAllMusicInRoom(roomId)
 const studentList = await this.musicStudentService.findStudentInRoom(roomId)
 const responseData = {roomTitle: room.roomTitle,
-    studentList: studentList.map(student => student.name),
+    studentList: studentList.map(student => student.encryptedName),
     musicList: musicList.map(music => ({
         musicId: music.musicId,
         roomTitle: music.title,
