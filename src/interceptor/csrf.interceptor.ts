@@ -16,7 +16,7 @@ export class CsrfInterceptor implements NestInterceptor {
       response.cookie('X-CSRF-Token', csrfToken, {
         httpOnly: true,
         secure: process.env.LOCAL === 'false',
-        sameSite: 'lax',
+        sameSite: process.env.LOCAL=== 'false' ? 'lax' : 'none',
       });
       
       // 응답 헤더에 토큰 설정 (클라이언트가 읽을 수 있게)
