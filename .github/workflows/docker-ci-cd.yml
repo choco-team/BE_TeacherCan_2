@@ -48,6 +48,7 @@ jobs:
               docker rm cloudsql-proxy || true
               docker run -d \
                 --name cloudsql-proxy \
+                --add-host=host.docker.internal:host-gateway
                 -v $ENV_PATH/secrets/key.json:/secrets/key.json:ro \
                 gcr.io/cloudsql-docker/gce-proxy:1.33.1 \
                 /cloud_sql_proxy \
