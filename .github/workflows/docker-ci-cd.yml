@@ -80,6 +80,7 @@ jobs:
             LLM_MODEL=${{ secrets.LLM_MODEL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             SERVER_PORT=${{ secrets.PORT }}
+            AES_KEY=${{ secrets.AES_KEY }}
             EOL"
 
             if [ "$USE_SSL" = true ]; then
