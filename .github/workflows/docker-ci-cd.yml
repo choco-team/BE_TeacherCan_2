@@ -1,95 +1,108 @@
-- name: Deploy to GCP VM
-  uses: appleboy/ssh-action@master
-  with:
-    host: ${{ secrets.GCP_VM_IP }}
-    username: ${{ secrets.GCP_VM_USERNAME }}
-    key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-    script: |
-      # 환경 설정
-      if [[ "${{ secrets.LOCAL }}" == "true" ]]; then
-        CONTAINER_NAME="nginx-app-test"
-        PORT_MAPPING="80:80"
-        ENV_PATH="/opt/app-test"
-        USE_SSL=false
-        echo "Deploying to TEST environment (LOCAL=true)"
-      else
-        CONTAINER_NAME="nginx-app"
-        PORT_MAPPING="80:80"
-        ENV_PATH="/opt/app"
-        USE_SSL=true
-        echo "Deploying to PRODUCTION environment (LOCAL=false)"
-      fi
-      
-      # Cloud SQL 프록시 컨테이너 (프로덕션일 경우만 실행)
-      if [ "$USE_SSL" = true ]; then
-        echo "Starting Cloud SQL Proxy for production..."
-        docker stop cloudsql-proxy || true
-        docker rm cloudsql-proxy || true
-        docker run -d \
-           --name cloudsql-proxy \
-           -v $ENV_PATH/secrets/key.json:/secrets/key.json:ro \
-           gcr.io/cloudsql-docker/gce-proxy:1.33.1 \
-           /cloud_sql_proxy \
-           -instances=${{ secrets.CLOUDSQL_INSTANCE_CONNECTION_NAME }}=tcp:3306 \
-           -credential_file=/secrets/key.json
-      fi
+name: Docker CI/CD
 
-      
-      # NestJS 컨테이너 중지 및 제거
-      docker stop $CONTAINER_NAME || true
-      docker rm $CONTAINER_NAME || true
+on:
+  push:
+    branches: [main, dev]
 
-      # 최신 이미지 pull
-      docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-      # 환경변수 및 디렉토리 설정
-      sudo mkdir -p $ENV_PATH
-      sudo mkdir -p $ENV_PATH/secrets
-      echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > $ENV_PATH/secrets/key.json
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      sudo bash -c "cat > $ENV_PATH/.env << EOL
-      DATABASE_HOST=localhost
-      DATABASE_PORT=3306
-      DATABASE_USER=${{ secrets.DATABASE_USER }}
-      DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-      DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-      LOCAL=${{ secrets.LOCAL }}
-      KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-      KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }}
-      SITE_URL=${{ secrets.SITE_URL }}
-      OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-      OPENAI_URL=${{ secrets.OPENAI_URL }}
-      LLM_MODEL=${{ secrets.LLM_MODEL }}
-      JWT_SECRET=${{ secrets.JWT_SECRET }}
-      SERVER_PORT=${{ secrets.SERVER_PORT }}
-      AES_KEY=${{ secrets.AES_KEY }}
-      EOL"
+      - name: Set Docker tag
+        id: set-tag
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "TAG=latest" >> $GITHUB_OUTPUT
+          else
+            echo "TAG=dev" >> $GITHUB_OUTPUT
+          fi
 
-      # NestJS 컨테이너 실행
-      if [ "$USE_SSL" = true ]; then
-        sudo mkdir -p $ENV_PATH/ssl
-        if sudo cp /etc/letsencrypt/live/api.teachercan.com/fullchain.pem $ENV_PATH/ssl/ && \
-           sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
+      - name: Deploy to GCP VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_VM_USERNAME }}
+          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          script: |
+            if [[ "${{ secrets.LOCAL }}" == "true" ]]; then
+              CONTAINER_NAME="nginx-app-test"
+              PORT_MAPPING="80:80"
+              ENV_PATH="/opt/app-test"
+              USE_SSL=false
+              echo "Deploying to TEST environment"
+            else
+              CONTAINER_NAME="nginx-app"
+              PORT_MAPPING="80:80"
+              ENV_PATH="/opt/app"
+              USE_SSL=true
+              echo "Deploying to PRODUCTION environment"
+            fi
 
-          docker run -d \
-            --name $CONTAINER_NAME \
-            -p $PORT_MAPPING -p 443:443 \
-            -v $ENV_PATH/.env:/.env:ro \
-            -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
-            --restart always \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
-        else
-          echo "ERROR: SSL certificates not found but required for production!"
-          exit 1
-        fi
-      else
-        echo "Running test environment without SSL."
-        docker run -d \
-          --name $CONTAINER_NAME \
-          -p $PORT_MAPPING \
-          -v $ENV_PATH/.env:/.env:ro \
-          --restart always \
-          ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
-      fi
+            if [ "$USE_SSL" = true ]; then
+              echo "Starting Cloud SQL Proxy..."
+              docker stop cloudsql-proxy || true
+              docker rm cloudsql-proxy || true
+              docker run -d \
+                --name cloudsql-proxy \
+                -v $ENV_PATH/secrets/key.json:/secrets/key.json:ro \
+                gcr.io/cloudsql-docker/gce-proxy:1.33.1 \
+                /cloud_sql_proxy \
+                -instances=${{ secrets.CLOUDSQL_INSTANCE_CONNECTION_NAME }}=tcp:3306 \
+                -credential_file=/secrets/key.json
+            fi
 
-      docker image prune -a -f
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+
+            sudo mkdir -p $ENV_PATH
+            sudo mkdir -p $ENV_PATH/secrets
+            echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > $ENV_PATH/secrets/key.json
+
+            sudo bash -c "cat > $ENV_PATH/.env << EOL
+            DATABASE_HOST=localhost
+            DATABASE_PORT=3306
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            LOCAL=${{ secrets.LOCAL }}
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }}
+            SITE_URL=${{ secrets.SITE_URL }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            OPENAI_URL=${{ secrets.OPENAI_URL }}
+            LLM_MODEL=${{ secrets.LLM_MODEL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            SERVER_PORT=${{ secrets.PORT }}
+            EOL"
+
+            if [ "$USE_SSL" = true ]; then
+              sudo mkdir -p $ENV_PATH/ssl
+              if sudo cp /etc/letsencrypt/live/api.teachercan.com/fullchain.pem $ENV_PATH/ssl/ && \
+                 sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
+                docker run -d \
+                  --name $CONTAINER_NAME \
+                  -p $PORT_MAPPING -p 443:443 \
+                  -v $ENV_PATH/.env:/.env:ro \
+                  -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
+                  --restart always \
+                  ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+              else
+                echo "ERROR: SSL certs missing for production!"
+                exit 1
+              fi
+            else
+              docker run -d \
+                --name $CONTAINER_NAME \
+                -p $PORT_MAPPING \
+                -v $ENV_PATH/.env:/.env:ro \
+                --restart always \
+                ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+            fi
+
+            docker image prune -a -f
