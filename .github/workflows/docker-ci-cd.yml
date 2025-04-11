@@ -51,12 +51,14 @@ jobs:
               PORT_MAPPING="80:80"
               ENV_PATH="/opt/app-test"
               USE_SSL=false
+              DB_HOST="10.178.0.3"
               echo "Deploying to TEST environment (LOCAL=true)"
             else
               CONTAINER_NAME="nginx-app"
               PORT_MAPPING="80:80"
               ENV_PATH="/opt/app"
               USE_SSL=true
+              DB_HOST="localhost"
               echo "Deploying to PRODUCTION environment (LOCAL=false)"
             fi
 
@@ -86,8 +88,9 @@ jobs:
             sudo mkdir -p $ENV_PATH/secrets
             echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > $ENV_PATH/secrets/key.json
 
+            # ✅ DB_HOST를 분기 처리한 값으로 주입
             sudo bash -c "cat > $ENV_PATH/.env << EOL
-            DATABASE_HOST=localhost
+            DATABASE_HOST=$DB_HOST
             DATABASE_PORT=3306
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
