@@ -108,4 +108,4 @@ jobs:
             fi
 
             docker image prune -a -f
-            cat $ENV_PATH/.env
+            sudo cat $ENV_PATH/.env
