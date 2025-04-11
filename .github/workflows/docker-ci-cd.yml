@@ -66,7 +66,7 @@ jobs:
             echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > $ENV_PATH/secrets/key.json
 
             sudo bash -c "cat > $ENV_PATH/.env << EOL
-            DATABASE_HOST=localhost
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             DATABASE_PORT=3306
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
