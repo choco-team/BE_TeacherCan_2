@@ -49,7 +49,6 @@ jobs:
               docker rm cloudsql-proxy || true
               docker run -d \
                 --name cloudsql-proxy \
-                --add-host=host.docker.internal:host-gateway
                 -v $ENV_PATH/secrets/key.json:/secrets/key.json:ro \
                 gcr.io/cloudsql-docker/gce-proxy:1.33.1 \
                 /cloud_sql_proxy \
@@ -86,7 +85,7 @@ jobs:
             if [ "$USE_SSL" = true ]; then
               sudo mkdir -p $ENV_PATH/ssl
               if sudo cp /etc/letsencrypt/live/api.teachercan.com/fullchain.pem $ENV_PATH/ssl/ && \
-                 sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
+                sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
                 docker run -d \
                   --name $CONTAINER_NAME \
                   -p $PORT_MAPPING -p 443:443 \
@@ -102,6 +101,7 @@ jobs:
               docker run -d \
                 --name $CONTAINER_NAME \
                 -p $PORT_MAPPING \
+                --add-host=host.docker.internal:host-gateway \
                 -v $ENV_PATH/.env:/.env:ro \
                 --restart always \
                 ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
