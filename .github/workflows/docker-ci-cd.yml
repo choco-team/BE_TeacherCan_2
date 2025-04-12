@@ -46,17 +46,22 @@ jobs:
             echo "Create Docker network if not exists..."
             docker network inspect app-network >/dev/null 2>&1 || docker network create app-network
 
+            echo "Stop existing container..."
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
 
+            echo "Pull new Docker image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
 
+            echo "Prepare environment..."
             sudo mkdir -p $ENV_PATH
             sudo mkdir -p $ENV_PATH/secrets
-            echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > $ENV_PATH/secrets/key.json
+            sudo rm -f $ENV_PATH/secrets/key.json
+            echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d | sudo tee $ENV_PATH/secrets/key.json > /dev/null
 
-            sudo bash -c "cat > $ENV_PATH/.env << EOL
-            DATABASE_HOST=${{ secrets.DATABASE_HOST }}  # 프라이빗 IP 입력됨
+            echo "Write .env file..."
+            sudo tee $ENV_PATH/.env > /dev/null <<EOF
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             DATABASE_PORT=3306
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
@@ -71,12 +76,14 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             SERVER_PORT=${{ secrets.SERVER_PORT }}
             AES_KEY=${{ secrets.AES_KEY }}
-            EOL"
+            EOF
 
             if [ "$USE_SSL" = true ]; then
+              echo "Apply SSL certs..."
               sudo mkdir -p $ENV_PATH/ssl
               if sudo cp /etc/letsencrypt/live/api.teachercan.com/fullchain.pem $ENV_PATH/ssl/ && \
-                sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
+                 sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
+                echo "Start container with SSL..."
                 docker run -d \
                   --name $CONTAINER_NAME \
                   --network app-network \
@@ -90,6 +97,7 @@ jobs:
                 exit 1
               fi
             else
+              echo "Start container without SSL..."
               docker run -d \
                 --name $CONTAINER_NAME \
                 --network app-network \
@@ -99,5 +107,8 @@ jobs:
                 ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
             fi
 
+            echo "Cleanup unused images..."
             docker image prune -a -f
+
+            echo "Deploy complete. Env file:"
             sudo cat $ENV_PATH/.env
