@@ -69,7 +69,7 @@ jobs:
             OPENAI_URL=${{ secrets.OPENAI_URL }}
             LLM_MODEL=${{ secrets.LLM_MODEL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
-            SERVER_PORT=${{ secrets.PORT }}
+            SERVER_PORT=${{ secrets.SERVER_PORT }}
             AES_KEY=${{ secrets.AES_KEY }}
             EOL"
 
