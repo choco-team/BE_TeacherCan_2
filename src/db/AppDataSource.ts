@@ -16,6 +16,7 @@ try {
   if (fs.existsSync('/.env')) {
     dotenv.config({ path: '/.env' });
     console.log('Environment variables loaded directly in AppDataSource');
+    console.log('DATABASE_PASSWORD from env:', process.env.DATABASE_PASSWORD);
   }
 } catch (error) {
   console.error('Error loading .env file:', error);
