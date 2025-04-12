@@ -43,16 +43,20 @@ jobs:
               echo "Deploying to PRODUCTION environment"
             fi
 
+            echo "Create Docker network if not exists..."
+            docker network inspect app-network >/dev/null 2>&1 || docker network create app-network
+
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
 
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
 
             sudo mkdir -p $ENV_PATH
-            echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > $ENV_PATH/secrets-key.json
+            sudo mkdir -p $ENV_PATH/secrets
+            echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > $ENV_PATH/secrets/key.json
 
             sudo bash -c "cat > $ENV_PATH/.env << EOL
-            DATABASE_HOST=${{ secrets.DATABASE_HOST }}  # 여기에 프라이빗 IP
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}  # 프라이빗 IP 입력됨
             DATABASE_PORT=3306
             DATABASE_USER=${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
@@ -75,6 +79,7 @@ jobs:
                 sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
                 docker run -d \
                   --name $CONTAINER_NAME \
+                  --network app-network \
                   -p $PORT_MAPPING -p 443:443 \
                   -v $ENV_PATH/.env:/.env:ro \
                   -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
@@ -87,6 +92,7 @@ jobs:
             else
               docker run -d \
                 --name $CONTAINER_NAME \
+                --network app-network \
                 -p $PORT_MAPPING \
                 -v $ENV_PATH/.env:/.env:ro \
                 --restart always \
