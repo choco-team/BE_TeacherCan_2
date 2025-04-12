@@ -15,6 +15,7 @@ async function bootstrap() {
       console.log('Environment variables loaded from /.env');
       console.log(`DATABASE_HOST from env: ${process.env.DATABASE_HOST}`);
       console.log(`DATABASE_PORT from env: ${process.env.DATABASE_PORT}`);
+      console.log('DATABASE_PASSWORD from env:', process.env.DATABASE_PASSWORD);
     }
   } catch (error) {
     console.error('Error loading .env file:', error);
