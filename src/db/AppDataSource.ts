@@ -38,6 +38,6 @@ export const AppDataSource = new DataSource({
   synchronize: process.env.LOCAL === 'true',
   logging: process.env.LOCAL === 'true',
   extra: {
-    authPlugins: 'caching_sha2_password'
+    caching_sha2_password: () => () => Buffer.from(process.env.DATABASE_PASSWORD || '')
   }
 });
