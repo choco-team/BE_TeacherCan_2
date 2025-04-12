@@ -24,6 +24,7 @@ try {
 // 환경 변수 로그
 console.log('DATABASE_HOST from env:', process.env.DATABASE_HOST);
 console.log('Using host:', process.env.DATABASE_HOST || 'localhost');
+console.log('DATABASE_PASSWORD from env:', process.env.DATABASE_PASSWORD);
 
 export const AppDataSource = new DataSource({
   type: 'mysql', // 또는 'mariadb'
