@@ -61,22 +61,22 @@ jobs:
 
             echo "Write .env file..."
             sudo tee $ENV_PATH/.env > /dev/null <<EOF
-DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-DATABASE_PORT=3306
-DATABASE_USER=${{ secrets.DATABASE_USER }}
-DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-LOCAL=${{ secrets.LOCAL }}
-KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }}
-SITE_URL=${{ secrets.SITE_URL }}
-OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-OPENAI_URL=${{ secrets.OPENAI_URL }}
-LLM_MODEL=${{ secrets.LLM_MODEL }}
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-SERVER_PORT=${{ secrets.SERVER_PORT }}
-AES_KEY=${{ secrets.AES_KEY }}
-EOF
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            DATABASE_PORT=3306
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            LOCAL=${{ secrets.LOCAL }}
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }}
+            SITE_URL=${{ secrets.SITE_URL }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            OPENAI_URL=${{ secrets.OPENAI_URL }}
+            LLM_MODEL=${{ secrets.LLM_MODEL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            SERVER_PORT=${{ secrets.SERVER_PORT }}
+            AES_KEY=${{ secrets.AES_KEY }}
+            EOF
 
             if [ "$USE_SSL" = true ]; then
               echo "Apply SSL certs..."
