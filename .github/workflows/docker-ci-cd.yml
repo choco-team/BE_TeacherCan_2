@@ -1,43 +1,37 @@
 name: Docker CI/CD
+
 on:
   push:
-    branches: [ main, dev ]  # main과 dev 브랜치 모두 워크플로우 트리거
+    branches: [ main, dev ]
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-   
-    # 브랜치에 따라 환경 선택
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'test' }}
-   
+
+    env:
+      TAG: ${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}
+      ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'test' }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-   
+
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
-   
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-   
-    - name: Set Docker tag
-      id: set-tag
-      run: |
-        if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
-          echo "TAG=latest" >> $GITHUB_OUTPUT
-        else
-          echo "TAG=dev" >> $GITHUB_OUTPUT
-        fi
-   
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
         context: .
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
-   
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ env.TAG }}
+
     - name: Deploy to GCP VM
       uses: appleboy/ssh-action@master
       with:
@@ -45,31 +39,32 @@ jobs:
         username: ${{ secrets.GCP_VM_USERNAME }}
         key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
         script: |
-          # 환경 설정 (LOCAL 값에 따라 환경 구분)
-          if [[ "${{ secrets.LOCAL }}" == "true" ]]; then
-            # 테스트 환경 (LOCAL=true)
-            CONTAINER_NAME="nginx-app-test"
-            PORT_MAPPING="80:80"
-            ENV_PATH="/opt/app-test"
-            USE_SSL=false
-            echo "Deploying to TEST environment (LOCAL=true)"
-          else
-            # 프로덕션 환경 (LOCAL=false)
+          echo "🚀 Starting deployment to $ENVIRONMENT..."
+
+          if [[ "$ENVIRONMENT" == "production" ]]; then
             CONTAINER_NAME="nginx-app"
-            PORT_MAPPING="80:80"
             ENV_PATH="/opt/app"
             USE_SSL=true
-            echo "Deploying to PRODUCTION environment (LOCAL=false)"
+          else
+            CONTAINER_NAME="nginx-app-test"
+            ENV_PATH="/opt/app-test"
+            USE_SSL=false
           fi
-         
-          # 기존 컨테이너 중지 및 제거
+
+          PORT_MAPPING="80:80"
+
+          echo "📦 Container: $CONTAINER_NAME"
+          echo "📂 ENV Path: $ENV_PATH"
+          echo "🐳 Docker Tag: $TAG"
+
+          # 중복 컨테이너 정리
           docker stop $CONTAINER_NAME || true
           docker rm $CONTAINER_NAME || true
-         
-          # 최신 이미지 가져오기
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
-         
-          # VM에 환경 변수 파일 생성/업데이트
+
+          # 이미지 가져오기
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:$TAG
+
+          # .env 파일 쓰기
           sudo mkdir -p $ENV_PATH
           sudo bash -c "cat > $ENV_PATH/.env << EOL
           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
@@ -87,55 +82,43 @@ jobs:
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           SERVER_PORT=${{ secrets.SERVER_PORT }}
           AES_KEY=${{ secrets.AES_KEY }}
+          MYSQL_CA_PATH=/app/db-certs/server-ca.pem
+          MYSQL_CERT_PATH=/app/db-certs/client-cert.pem
+          MYSQL_KEY_PATH=/app/db-certs/client-key.pem
           EOL"
-         
-          # SSL 설정 (프로덕션 환경일 경우만)
+
+          # SSL 인증서 복사 (프로덕션에서만)
           if [ "$USE_SSL" = true ]; then
-            # SSL 디렉토리 생성
             sudo mkdir -p $ENV_PATH/ssl
-            
-            # SSL 인증서 복사 시도
+
             if sudo cp /etc/letsencrypt/live/api.teachercan.com/fullchain.pem $ENV_PATH/ssl/ && \
                sudo cp /etc/letsencrypt/live/api.teachercan.com/privkey.pem $ENV_PATH/ssl/; then
-              
-              # 인증서 권한 및 소유권 설정
+
               sudo chmod 644 $ENV_PATH/ssl/fullchain.pem
               sudo chmod 600 $ENV_PATH/ssl/privkey.pem
               sudo chown $(whoami):$(whoami) $ENV_PATH/ssl/fullchain.pem
               sudo chown $(whoami):$(whoami) $ENV_PATH/ssl/privkey.pem
-              
-              echo "SSL certificates successfully configured for production."
-              
-              # 이름에 'nginx'가 포함된 모든 컨테이너 찾아서 중지 및 제거
-              for container in $(docker ps -a --filter name=nginx -q); do
-                docker stop $container || true
-                docker rm $container || true
-              done
 
-              # SSL이 포함된 Docker 실행
-              docker run -d \
-                --name $CONTAINER_NAME \
-                -p $PORT_MAPPING \
-                -p 443:443 \
-                -v $ENV_PATH/.env:/.env:ro \
-                -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
-                -v /home/kor8240/db-certs:/app/db-certs:ro \     # 🔥 이 줄 추가
-                --restart always \
-                ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+              echo "✅ SSL certificates configured."
             else
-              echo "ERROR: SSL certificates not found but required for production!"
-              exit 1  # 프로덕션에서는 SSL이 필수이므로 오류로 종료
+              echo "❌ ERROR: SSL certificates not found!"
+              exit 1
             fi
-          else
-            # 테스트 환경 - SSL 없이 실행
-            echo "Running test environment without SSL."
-            docker run -d \
-              --name $CONTAINER_NAME \
-              -p $PORT_MAPPING \
-              -v $ENV_PATH/.env:/.env:ro \
-              --restart always \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
           fi
-          
-          # 사용하지 않는 이미지 정리
+
+          # 도커 실행
+          echo "🚀 Starting Docker container..."
+          docker run -d \
+            --name $CONTAINER_NAME \
+            -p $PORT_MAPPING \
+            -p 443:443 \
+            -v $ENV_PATH/.env:/.env:ro \
+            -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
+            -v /home/kor8240/db-certs:/app/db-certs:ro \
+            --restart always \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:$TAG
+
+          echo "🧹 Cleaning up unused images..."
           docker image prune -a -f
+
+          echo "✅ Deployment complete!"
