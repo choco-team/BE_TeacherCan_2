@@ -14,10 +14,24 @@ import { MusicModule } from './music/music.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CsrfInterceptor } from './interceptor/csrf.interceptor';
 import { CsrfMiddleware } from './middleware/csrf.middleware';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(AppDataSource.options), // AppDataSource 적용
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get<string>('DATABASE_HOST'),
+        port: parseInt(configService.get<string>('DATABASE_PORT'), 10),
+        username: configService.get<string>('DATABASE_USER'),
+        password: configService.get<string>('DATABASE_PASSWORD'),
+        database: configService.get<string>('DATABASE_NAME'),
+        synchronize: false,
+        autoLoadEntities: true,
+      }),
+      inject: [ConfigService],
+    }),
     AuthModule, // ✅ `AuthModule`을 통해 `AuthGuard`, `RolesGuard` 제공
     SubjectModule,
     QuestionModule,
