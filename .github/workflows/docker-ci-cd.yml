@@ -113,14 +113,14 @@ jobs:
               done
 
               # SSL이 포함된 Docker 실행
-              docker run -d \
+                docker run -d \
                 --name $CONTAINER_NAME \
                 -p $PORT_MAPPING \
                 -p 443:443 \
-                -v $ENV_PATH/.env:/.env:ro \
+                --env-file $ENV_PATH/.env \
                 -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
                 --restart always \
-                ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
+              ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
             else
               echo "ERROR: SSL certificates not found but required for production!"
               exit 1  # 프로덕션에서는 SSL이 필수이므로 오류로 종료
