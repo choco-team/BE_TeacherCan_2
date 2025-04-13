@@ -28,25 +28,26 @@ import { ConfigService } from '@nestjs/config';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'mysql',
-        host: config.get('DATABASE_HOST'),
-        port: parseInt(config.get('DATABASE_PORT') ?? '3306', 10),
-        username: config.get('DATABASE_USER'),
-        password: config.get('DATABASE_PASSWORD'),
-        database: config.get('DATABASE_NAME'),
-        autoLoadEntities: true,
-        synchronize: false,
-      }),
+      useFactory: (config: ConfigService) => {
+        // 여기에 로그 삽입!
+        console.log('🔐 비밀번호 실제 값:', config.get('DATABASE_PASSWORD'));
+
+        return {
+          type: 'mysql',
+          host: config.get('DATABASE_HOST'),
+          port: parseInt(config.get('DATABASE_PORT') ?? '3306', 10),
+          username: config.get('DATABASE_USER'),
+          password: config.get('DATABASE_PASSWORD'),
+          database: config.get('DATABASE_NAME'),
+          synchronize: false,
+          autoLoadEntities: true,
+        };
+      },
     }),
-    AuthModule, // ✅ AuthModule을 통해 AuthGuard, RolesGuard 제공
+
+    AuthModule,
     SubjectModule,
     QuestionModule,
-    ConfigModule.forRoot({
-      isGlobal: true, // ✅ 전역 사용 가능하도록 설정
-      envFilePath: '/.env', // 루트 디렉토리의 .env 파일
-      ignoreEnvFile: false, // .env 파일을 무시하지 않음
-    }),
     StudentModule,
     LlmModule,
     MusicModule,
@@ -54,16 +55,16 @@ import { ConfigService } from '@nestjs/config';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: AuthGuard, // ✅ AuthGuard가 AuthModule에서 해결 가능
+      useClass: AuthGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard, // ✅ RolesGuard도 AuthModule을 통해 해결 가능
+      useClass: RolesGuard,
     },
     {
       provide: APP_INTERCEPTOR,
       useClass: CsrfInterceptor,
-    }
+    },
   ],
 })
 export class AppModule implements NestModule {
