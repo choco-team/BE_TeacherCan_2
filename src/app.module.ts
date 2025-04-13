@@ -11,6 +11,8 @@ import { RolesGuard } from './auth/role.guard';
 import { StudentModule } from './student/student.module';
 import { LlmModule } from './llm/llm.module';
 import { MusicModule } from './music/music.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { CsrfInterceptor } from './interceptor/csrf.interceptor';
 import { CsrfMiddleware } from './middleware/csrf.middleware';
 
 @Module({
@@ -35,6 +37,10 @@ import { CsrfMiddleware } from './middleware/csrf.middleware';
       provide: APP_GUARD,
       useClass: RolesGuard, // ✅ `RolesGuard`도 `AuthModule`을 통해 해결 가능
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CsrfInterceptor,
+    }
   ],
 })
 export class AppModule implements NestModule {
