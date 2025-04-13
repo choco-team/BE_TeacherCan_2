@@ -1,6 +1,8 @@
 # 1. Node.js 베이스 이미지 사용
 FROM node:20
 RUN npm install -g @nestjs/cli
+# Nginx 설치
+RUN apt-get update && apt-get install -y nginx
 # 2. 작업 디렉토리 설정
 WORKDIR /app
 
