@@ -21,9 +21,6 @@ try {
   console.error('Error loading .env file:', error);
 }
 
-// 환경 변수 로그
-console.log('DATABASE_HOST from env:', process.env.DATABASE_HOST);
-console.log('Using host:', process.env.DATABASE_HOST || 'localhost');
 
 export const AppDataSource = new DataSource({
   type: 'mysql', // 또는 'mariadb'
@@ -36,6 +33,12 @@ export const AppDataSource = new DataSource({
   synchronize: process.env.LOCAL === 'true',
   logging: process.env.LOCAL === 'true',
   extra: {
-    authPlugins: 'caching_sha2_password'
+    authPlugins: 'caching_sha2_password',
+    ssl: process.env.LOCAL === 'false' ? {
+      ca: fs.readFileSync(process.env.MYSQL_CA_PATH!, 'utf8'),
+      cert: fs.readFileSync(process.env.MYSQL_CERT_PATH!, 'utf8'),
+      key: fs.readFileSync(process.env.MYSQL_KEY_PATH!, 'utf8'),
+      rejectUnauthorized: true
+    } : undefined
   }
 });

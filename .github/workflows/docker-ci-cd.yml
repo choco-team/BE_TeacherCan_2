@@ -119,6 +119,7 @@ jobs:
                 -p 443:443 \
                 -v $ENV_PATH/.env:/.env:ro \
                 -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
+                -v /home/kor8240/db-certs:/app/db-certs:ro \     # 🔥 이 줄 추가
                 --restart always \
                 ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
             else

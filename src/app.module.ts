@@ -29,8 +29,6 @@ import { ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        // 여기에 로그 삽입!
-        console.log('🔐 비밀번호 실제 값:', config.get('DATABASE_PASSWORD'));
 
         return {
           type: 'mysql',
