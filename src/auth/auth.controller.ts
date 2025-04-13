@@ -1,6 +1,5 @@
 import { Controller, Delete, Get, HttpException, HttpStatus, Query, Req, Res, UseInterceptors } from '@nestjs/common';
 import { AuthRequest } from './auth.types';
-import { CookieInterceptor } from 'src/interceptor/cookie.interceptor';
 import { UserDecorator } from 'src/decorator/user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
 import { UserIdResponseDto } from 'src/dto/response.dto';
