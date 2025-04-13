@@ -117,7 +117,7 @@ jobs:
                 --name $CONTAINER_NAME \
                 -p $PORT_MAPPING \
                 -p 443:443 \
-                -v $ENV_PATH/.env:/.env:ro \
+                --env-file $ENV_PATH/.env \
                 -v $ENV_PATH/ssl:/etc/nginx/ssl:ro \
                 --restart always \
                 ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:${{ steps.set-tag.outputs.TAG }}
