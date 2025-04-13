@@ -20,19 +20,28 @@ import { ConfigService } from '@nestjs/config';
   imports: [
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.get<string>('DATABASE_HOST'),
-        port: parseInt(configService.get<string>('DATABASE_PORT'), 10),
-        username: configService.get<string>('DATABASE_USER'),
-        password: configService.get<string>('DATABASE_PASSWORD'),
-        database: configService.get<string>('DATABASE_NAME'),
-        synchronize: false,
-        autoLoadEntities: true,
-      }),
-      inject: [ConfigService],
-    }),
-    AuthModule, // ✅ `AuthModule`을 통해 `AuthGuard`, `RolesGuard` 제공
+      useFactory: (configService: ConfigService) => {
+        console.log('🔍 DB 연결 시도:', {
+          host: configService.get('DATABASE_HOST'),
+          port: configService.get('DATABASE_PORT'),
+          user: configService.get('DATABASE_USER'),
+          pass: configService.get('DATABASE_PASSWORD'),
+          db: configService.get('DATABASE_NAME'),
+        });
+      
+        return {
+          type: 'mysql',
+          host: configService.get<string>('DATABASE_HOST'),
+          port: parseInt(configService.get<string>('DATABASE_PORT'), 10),
+          username: configService.get<string>('DATABASE_USER'),
+          password: configService.get<string>('DATABASE_PASSWORD'),
+          database: configService.get<string>('DATABASE_NAME'),
+          synchronize: false,
+          autoLoadEntities: true,
+        };
+      },
+}),
+    AuthModule, // ✅ AuthModule을 통해 AuthGuard, RolesGuard 제공
     SubjectModule,
     QuestionModule,
     ConfigModule.forRoot({
@@ -47,11 +56,11 @@ import { ConfigService } from '@nestjs/config';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: AuthGuard, // ✅ `AuthGuard`가 `AuthModule`에서 해결 가능
+      useClass: AuthGuard, // ✅ AuthGuard가 AuthModule에서 해결 가능
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard, // ✅ `RolesGuard`도 `AuthModule`을 통해 해결 가능
+      useClass: RolesGuard, // ✅ RolesGuard도 AuthModule을 통해 해결 가능
     },
     {
       provide: APP_INTERCEPTOR,
