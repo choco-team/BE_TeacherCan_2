@@ -18,29 +18,27 @@ import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
+    // ✅ 먼저 .env 환경변수 로딩
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: process.env.LOCAL === 'true' ? './.env' : '/.env',
+    }),
+
+    // ✅ 그 다음 TypeORM (ConfigService 의존함)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        console.log('🔍 DB 연결 시도:', {
-          host: configService.get('DATABASE_HOST'),
-          port: configService.get('DATABASE_PORT'),
-          user: configService.get('DATABASE_USER'),
-          pass: configService.get('DATABASE_PASSWORD'),
-          db: configService.get('DATABASE_NAME'),
-        });
-      
-        return {
-          type: 'mysql',
-          host: configService.get<string>('DATABASE_HOST'),
-          port: parseInt(configService.get<string>('DATABASE_PORT'), 10),
-          username: configService.get<string>('DATABASE_USER'),
-          password: configService.get<string>('DATABASE_PASSWORD'),
-          database: configService.get<string>('DATABASE_NAME'),
-          synchronize: false,
-          autoLoadEntities: true,
-        };
-      },
-}),
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'mysql',
+        host: config.get('DATABASE_HOST'),
+        port: parseInt(config.get('DATABASE_PORT') ?? '3306', 10),
+        username: config.get('DATABASE_USER'),
+        password: config.get('DATABASE_PASSWORD'),
+        database: config.get('DATABASE_NAME'),
+        autoLoadEntities: true,
+        synchronize: false,
+      }),
+    }),
     AuthModule, // ✅ AuthModule을 통해 AuthGuard, RolesGuard 제공
     SubjectModule,
     QuestionModule,
