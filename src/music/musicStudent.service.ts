@@ -16,7 +16,7 @@ constructor(
 
 async findStudentById(studentId){
         const studentData = await this.studentRepository.findOne({where:{id:studentId}})
-        if (studentData) {throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND)}
+        if (!studentData) {throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND)}
         const encryptedStudent = this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName)
         return {...studentData, name:encryptedStudent}           
 }
