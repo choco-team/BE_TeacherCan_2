@@ -24,7 +24,7 @@ async findStudentById(studentId){
 async findStudentByNameAndRoomId(name, roomId){
     const nameHash = this.cryptoService.hashData(name)
     const studentData = await this.studentRepository.findOne({where:{nameHash, roomId}})
-    if (studentData) {throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND)}
+    if (!studentData) {throw new HttpException("학생을 찾을 수 없습니다", HttpStatus.NOT_FOUND)}
     const encryptedStudent = this.cryptoService.decryptAES(studentData.encryptedName, studentData.ivName)
     return  {...studentData, name:encryptedStudent}     
 }
