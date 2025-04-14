@@ -29,12 +29,17 @@ async findStudentByNameAndRoomId(name, roomId){
     return  {...studentData, name:encryptedStudent}     
 }
 
-async findStudentInRoom(roomId){
-    const studentList = await this.studentRepository.find({where:{roomId}})
-    const encryptedStudentList = studentList.map(student => ({...student, name:this.cryptoService.decryptAES(student.encryptedName, student.ivName)}));
-    return encryptedStudentList
-}
+async findStudentInRoom(roomId) {
+    const studentList = await this.studentRepository.find({ where: { roomId } });
 
+    const decrypted = await Promise.all(
+        studentList.map(async (student) => ({
+          id: student.id,
+          name: await this.cryptoService.decryptAES(student.encryptedName, student.ivName)
+        }))
+      );    
+      return decrypted;
+    }    
 
 async addStudentInRoom(roomId, name){
     const {encryptedData, iv}= await this.cryptoService.encryptAES(name)
