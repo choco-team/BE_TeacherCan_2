@@ -36,7 +36,7 @@ jobs:
             cd $APP_PATH || mkdir -p $APP_PATH && cd $APP_PATH
 
             echo "✅ Writing .env file..."
-            cat > .env << EOF
+            sudo tee .env > /dev/null <<EOF
             DATABASE_HOST=mysql
             DATABASE_PORT=3306
             DATABASE_USER=${{ secrets.DATABASE_USER }}
@@ -57,7 +57,7 @@ jobs:
             EOF
 
             echo "✅ Writing docker-compose.yml..."
-            cat > docker-compose.yml << EOF
+            sudo tee docker-compose.yml > /dev/null <<'EOF'
             version: '3.8'
             services:
               redis:
