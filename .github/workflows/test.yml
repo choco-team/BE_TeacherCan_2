@@ -76,8 +76,7 @@ jobs:
             docker compose -f $COMPOSE_PATH up -d
 
             echo "Stopping old container if exists..."
-            docker stop $CONTAINER_NAME || true
-            docker rm $CONTAINER_NAME || true
+            docker rm -f $CONTAINER_NAME || true
 
             echo "Pulling new image and running app..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
