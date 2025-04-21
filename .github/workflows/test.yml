@@ -36,72 +36,72 @@ jobs:
             cd $APP_PATH || mkdir -p $APP_PATH && cd $APP_PATH
 
             echo "✅ Writing .env file..."
-            cat <<EOF | sudo tee .env
-DATABASE_HOST=mysql
-DATABASE_PORT=3306
-DATABASE_USER=${{ secrets.DATABASE_USER }}
-DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-REDIS_HOST=redis
-REDIS_PORT=6379
-LOCAL=true
-KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }}
-SITE_URL=${{ secrets.SITE_URL }}
-OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-OPENAI_URL=${{ secrets.OPENAI_URL }}
-LLM_MODEL=${{ secrets.LLM_MODEL }}
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-SERVER_PORT=${{ secrets.SERVER_PORT }}
-AES_KEY=${{ secrets.AES_KEY }}
-EOF
+            cat > .env << EOF
+            DATABASE_HOST=mysql
+            DATABASE_PORT=3306
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            REDIS_HOST=redis
+            REDIS_PORT=6379
+            LOCAL=true
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }}
+            SITE_URL=${{ secrets.SITE_URL }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            OPENAI_URL=${{ secrets.OPENAI_URL }}
+            LLM_MODEL=${{ secrets.LLM_MODEL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            SERVER_PORT=${{ secrets.SERVER_PORT }}
+            AES_KEY=${{ secrets.AES_KEY }}
+            EOF
 
             echo "✅ Writing docker-compose.yml..."
-            cat <<EOF | sudo tee docker-compose.yml
-version: '3.8'
-services:
-  redis:
-    image: redis:7.2
-    container_name: redis
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: ["redis-server", "--appendonly", "yes"]
+            cat > docker-compose.yml << EOF
+            version: '3.8'
+            services:
+              redis:
+                image: redis:7.2
+                container_name: redis
+                restart: always
+                ports:
+                  - "6379:6379"
+                volumes:
+                  - redis-data:/data
+                command: ["redis-server", "--appendonly", "yes"]
 
-  mysql:
-    image: mysql:8.4
-    container_name: mysql-dev
-    restart: always
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_DATABASE: \${DATABASE_NAME}
-      MYSQL_USER: \${DATABASE_USER}
-      MYSQL_PASSWORD: \${DATABASE_PASSWORD}
-      MYSQL_ROOT_PASSWORD: \${DATABASE_PASSWORD}
-    volumes:
-      - mysql-data:/var/lib/mysql
-    env_file:
-      - .env
+              mysql:
+                image: mysql:8.4
+                container_name: mysql-dev
+                restart: always
+                ports:
+                  - "3306:3306"
+                environment:
+                  MYSQL_DATABASE: \${DATABASE_NAME}
+                  MYSQL_USER: \${DATABASE_USER}
+                  MYSQL_PASSWORD: \${DATABASE_PASSWORD}
+                  MYSQL_ROOT_PASSWORD: \${DATABASE_PASSWORD}
+                volumes:
+                  - mysql-data:/var/lib/mysql
+                env_file:
+                  - .env
 
-  nginx-app-test:
-    image: ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
-    container_name: nginx-app-test
-    restart: always
-    ports:
-      - "80:80"
-    env_file:
-      - .env
-    depends_on:
-      - mysql
-      - redis
+              nginx-app-test:
+                image: ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
+                container_name: nginx-app-test
+                restart: always
+                ports:
+                  - "80:80"
+                env_file:
+                  - .env
+                depends_on:
+                  - mysql
+                  - redis
 
-volumes:
-  redis-data:
-  mysql-data:
-EOF
+            volumes:
+              redis-data:
+              mysql-data:
+            EOF
 
             echo "🧼 Stopping previous containers"
             docker compose down || true
