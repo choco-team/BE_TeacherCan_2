@@ -90,3 +90,25 @@ jobs:
               ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
 
             docker image prune -a -f
+            echo "[DEBUG] Before removing:"
+            docker ps -a
+
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+
+            echo "[DEBUG] After removing:"
+            docker ps -a
+
+            echo "[DEBUG] Pulling image:"
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
+
+            echo "[DEBUG] Running new container:"
+            docker run -d \
+              --name $CONTAINER_NAME \
+              -p $PORT_MAPPING \
+              --env-file $ENV_PATH/.env \
+              --restart always \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
+
+            echo "[DEBUG] Final containers:"
+            docker ps -a
