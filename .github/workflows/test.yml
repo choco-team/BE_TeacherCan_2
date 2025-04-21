@@ -31,12 +31,11 @@ jobs:
           host: ${{ secrets.GCP_VM_IP }}
           username: ${{ secrets.GCP_VM_USERNAME }}
           key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-          script: |
-            APP_PATH="/opt/app-test"
-            cd $APP_PATH || mkdir -p $APP_PATH && cd $APP_PATH
+script: |
+  APP_PATH="/opt/app-test"
+  cd $APP_PATH || mkdir -p $APP_PATH && cd $APP_PATH
 
-            echo "📦 Writing .env for docker-compose"
-            cat <<EOF | sudo tee .env
+  cat <<EOF | sudo tee .env
 DATABASE_HOST=mysql
 DATABASE_PORT=3306
 DATABASE_USER=${{ secrets.DATABASE_USER }}
