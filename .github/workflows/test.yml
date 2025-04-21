@@ -57,7 +57,7 @@ AES_KEY=${{ secrets.AES_KEY }}
 EOF
 
             echo "✅ Writing docker-compose.yml..."
-            cat <<'EOF' | sudo tee docker-compose.yml
+            cat <<EOF | sudo tee docker-compose.yml
 version: '3.8'
 services:
   redis:
@@ -77,10 +77,10 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_DATABASE: ${DATABASE_NAME}
-      MYSQL_USER: ${DATABASE_USER}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: \${DATABASE_NAME}
+      MYSQL_USER: \${DATABASE_USER}
+      MYSQL_PASSWORD: \${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: \${DATABASE_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
     env_file:
