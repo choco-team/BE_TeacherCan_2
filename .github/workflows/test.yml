@@ -18,24 +18,25 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and Push Test Image
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
 
-      - name: Deploy to GCP (Test)
+      - name: Deploy to Test VM via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.GCP_VM_IP }}
           username: ${{ secrets.GCP_VM_USERNAME }}
           key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-script: |
-  APP_PATH="/opt/app-test"
-  cd $APP_PATH || mkdir -p $APP_PATH && cd $APP_PATH
+          script: |
+            APP_PATH="/opt/app-test"
+            cd $APP_PATH || mkdir -p $APP_PATH && cd $APP_PATH
 
-  cat <<EOF | sudo tee .env
+            echo "✅ Writing .env file..."
+            cat <<EOF | sudo tee .env
 DATABASE_HOST=mysql
 DATABASE_PORT=3306
 DATABASE_USER=${{ secrets.DATABASE_USER }}
@@ -55,7 +56,7 @@ SERVER_PORT=${{ secrets.SERVER_PORT }}
 AES_KEY=${{ secrets.AES_KEY }}
 EOF
 
-            echo "🐳 Writing docker-compose.yml"
+            echo "✅ Writing docker-compose.yml..."
             cat <<'EOF' | sudo tee docker-compose.yml
 version: '3.8'
 services:
@@ -102,11 +103,11 @@ volumes:
   mysql-data:
 EOF
 
-            echo "🧼 Stopping previous containers (if any)"
+            echo "🧼 Stopping previous containers"
             docker compose down || true
 
-            echo "🚀 Launching all services via docker-compose"
-            docker compose --env-file .env up -d --build
+            echo "🚀 Running docker compose"
+            docker compose --env-file .env up -d
 
-            echo "✅ Deployment complete"
+            echo "✅ Deployed containers"
             docker ps -a
