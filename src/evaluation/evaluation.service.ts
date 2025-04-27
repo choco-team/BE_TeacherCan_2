@@ -4,7 +4,6 @@ import { CreateSessionDto, studentAnswer } from '../dto/session.dto';
 import { SessionStoreService } from './session-store.service';
 import { PassThrough } from 'stream';
 import { SessionStreamService } from './session-stream.service';
-import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
 
 
 @Injectable()
@@ -51,8 +50,8 @@ export class EvaluationService {
     try{
     const {student, answer} = body
     await this.sessionStore.saveStudentSession(sessionKey, String(student), answer)
-    await this.sessionStream.send(sessionKey, JSON.stringify({number:student, time: Date.now()}))
-  } catch (error){
+    this.sessionStream.send(sessionKey, JSON.stringify({number:student, time: Date.now()}))
+    } catch (error){
     throw new HttpException('서버에 답안 제출이 실패하였습니다', HttpStatus.INTERNAL_SERVER_ERROR)
   }
 

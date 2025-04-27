@@ -16,12 +16,12 @@ const isLocal = process.env.LOCAL === 'true';
 app.use(express.json());
 
 app.enableCors({
-  origin: isLocal
-    ? ['http://localhost:3000']  // 개발 환경
-    : ['https://www.teachercan.com'], // 배포 환경
-    methods: ['GET', 'POST', 'OPTIONS'],
-    credentials: true
+  origin: ['http://localhost:3000', 'https://teachercan.com'],
+  credentials: true,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: 'Content-Type,Authorization',
 });
+
 
 if (process.env.LOCAL==="true"){
   // Swagger 설정
