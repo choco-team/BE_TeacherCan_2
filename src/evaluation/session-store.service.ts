@@ -22,5 +22,8 @@ export class SessionStoreService {
    return await this.redisService.getClient().get(`session:${sessionKey}`);
   }
 
-
+  async saveStudentSession(sessionKey: string, studentId: string, data: any): Promise<void> {
+    const key = `session:${sessionKey}:${studentId}`;
+    await this.redisService.getClient().set(key, JSON.stringify(data), 'EX', 7200); // TTL 2시간
+  }
 }
