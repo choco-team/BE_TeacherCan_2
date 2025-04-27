@@ -33,7 +33,15 @@ jobs:
           key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
           script: |
             APP_PATH="/opt/app-test"
-            cd $APP_PATH || mkdir -p $APP_PATH && cd $APP_PATH
+            cd $APP_PATH || (mkdir -p $APP_PATH && cd $APP_PATH)
+
+            echo "✅ Installing docker-compose if missing..."
+            if ! [ -x "$(command -v docker-compose)" ]; then
+              sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+              sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
+            fi
+            docker-compose version
 
             echo "✅ Writing .env file..."
             sudo tee .env > /dev/null <<EOF
@@ -48,9 +56,6 @@ jobs:
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CALLBACK_URL=${{ secrets.KAKAO_CALLBACK_URL }}
             SITE_URL=${{ secrets.SITE_URL }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            OPENAI_URL=${{ secrets.OPENAI_URL }}
-            LLM_MODEL=${{ secrets.LLM_MODEL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             SERVER_PORT=${{ secrets.SERVER_PORT }}
             AES_KEY=${{ secrets.AES_KEY }}
@@ -94,16 +99,16 @@ jobs:
                   - "80:80"
                 env_file:
                   - .env
+            volumes:
+              redis-data:
+              mysql-data:
             EOF
 
-            docker-compose down || true
-            docker-compose up -d
-
             echo "🧼 Stopping previous containers"
-            docker compose down || true
+            docker-compose down || true
 
-            echo "🚀 Running docker compose"
-            docker compose --env-file .env up -d
+            echo "🚀 Running docker-compose up"
+            docker-compose up -d
 
             echo "✅ Deployed containers"
             docker ps -a

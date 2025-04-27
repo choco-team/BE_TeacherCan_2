@@ -23,7 +23,7 @@ COPY /nginx/default-ssl.conf /etc/nginx/default-ssl.conf
 COPY /nginx/default-http.conf /etc/nginx/default-http.conf
 
 # 시작 스크립트 복사
-COPY /nginx/start.sh /start.sh
+COPY nginx/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # 6. 포트 설정
