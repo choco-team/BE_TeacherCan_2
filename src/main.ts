@@ -17,7 +17,6 @@ app.use(express.json());
 
 app.enableCors({
   origin: ['http://localhost:3000', 'https://teachercan.com'],
-  credentials: true,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization',
 });
