@@ -183,10 +183,19 @@ confirmButton.addEventListener('click', () => {
           const errorData = await response.json();
           showToast('제출 실패: ' + errorData.message);
         }
-      } catch (error) {
-        showToast('서버 오류: ' + error.message);
-      }
-    });
+     } catch (error) {
+            showToast('서버 오류: ' + error.message, '전송 실패가 계속될 시에 지금 다운로드 받은 답안 파일을 전달해 채점할 수 있습니다');
+          
+            // 서버 전송 실패 시 답안 다운로드
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `answer_${selectedStudent}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+          }
+              });
   
     loadEvaluationData();
   });

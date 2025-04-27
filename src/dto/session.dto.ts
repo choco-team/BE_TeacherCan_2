@@ -40,3 +40,11 @@ export class CreateSessionDto {
   @Type(() => StudentDto)
   studentList: StudentDto[];
 }
+
+
+export class studentAnswer{
+  @IsNotEmpty()
+  @IsArray()
+  answer: (string | number)[]
+  student: number
+}

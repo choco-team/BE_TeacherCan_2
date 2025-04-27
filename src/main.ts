@@ -14,22 +14,13 @@ const isLocal = process.env.LOCAL === 'true';
 
 
 app.use(express.json());
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
-
 
 app.enableCors({
   origin: isLocal
     ? ['http://localhost:3000']  // 개발 환경
     : ['https://www.teachercan.com'], // 배포 환경
-  credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true
 });
 
 if (process.env.LOCAL==="true"){

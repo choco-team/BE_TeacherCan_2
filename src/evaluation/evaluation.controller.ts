@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Sse, Param, Res, Header, Get, Req } from '@nestjs/common';
 import { EvaluationService } from './evaluation.service';
-import { CreateSessionDto } from '../dto/session.dto';
+import { CreateSessionDto, studentAnswer } from '../dto/session.dto';
 import { ApiTags } from '@nestjs/swagger';
 import * as path from 'path';
 import { Request, Response } from 'express';
@@ -20,6 +20,7 @@ export class EvaluationController {
   }
   
   @Get('sse/:sessionKey')
+  @Header('Access-Control-Allow-Origin', '*') // 여기만 CORS 열어줌
   async connectSession(
     @Param('sessionKey') sessionKey: string,
     @Req() req: Request,
@@ -68,7 +69,13 @@ export class EvaluationController {
     return this.sessionStoreService.examInfomation(sessionKey)
   }
 
-
+  @Post('student/:sessionKey')
+  async submitExam(
+    @Param('sessionKey') sessionKey: string,
+    @Body() body: studentAnswer
+  ){
+    return this.evaluationService.examSubmit(sessionKey, body)
+  }
 
 
 }
