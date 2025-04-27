@@ -14,6 +14,7 @@ import { RedisModule } from './redis/redis.module';
 import { EvaluationModule } from './evaluation/evaluation.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SyncModule } from './sync/sync.module';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -40,7 +41,7 @@ import { SyncModule } from './sync/sync.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: CsrfInterceptor,
-    }
+    }, AppService
   ],
 })
 export class AppModule implements NestModule {
