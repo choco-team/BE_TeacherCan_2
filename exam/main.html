@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>평가 답안 제출</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center p-6">
+  <div class="max-w-3xl w-full bg-white shadow-md rounded-lg p-6">
+    <h1 id="exam-title" class="text-2xl font-semibold text-gray-800 mb-6">📄 평가지 제목</h1>
+
+<!-- 학생 번호 입력 -->
+<div class="mb-4">
+    <label class="block text-gray-700 mb-2">반번호</label>
+    <div class="flex space-x-2">
+      <input id="student-number" type="number" class="w-half p-2 border rounded-lg" placeholder="반번호 입력" />
+      <button id="confirm-button" class="px-4 bg-green-500 hover:bg-green-600 text-white rounded">
+        확인
+      </button>
+    </div>
+    <span id="student-name" class="block mt-2 text-sm text-gray-500">학생 이름 표시</span>
+  </div>
+  
+    <hr class="my-4" />
+
+    <!-- 문제 리스트 -->
+    <div id="question-container"></div>
+
+    <!-- 제출 버튼 -->
+    <button id="submit-button" class="w-full mt-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded" disabled>
+      제출하기
+    </button>
+  </div>
+
+  <!-- 메인 스크립트 -->
+  <script src="./javaScript/code"></script>
+</body>
+</html>

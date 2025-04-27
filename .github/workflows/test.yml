@@ -94,14 +94,10 @@ jobs:
                   - "80:80"
                 env_file:
                   - .env
-                depends_on:
-                  - mysql
-                  - redis
-
-            volumes:
-              redis-data:
-              mysql-data:
             EOF
+
+            docker-compose down || true
+            docker-compose up -d
 
             echo "🧼 Stopping previous containers"
             docker compose down || true

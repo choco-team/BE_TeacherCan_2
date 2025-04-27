@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Session } from './session.entity';
-import { Subject } from './subject.entity';
 import { UserRole } from 'src/dto/user.dto';
 
 @Entity('users')
@@ -41,12 +40,5 @@ export class User {
   @OneToMany(() => Session, (session) => session.user, { cascade: true }) // ✅ 유저가 삭제되면 세션도 삭제됨
   sessions: Session[];
 
-  // ✅ One-to-Many 관계: 한 유저가 여러 과목을 가질 수 있음
-  @OneToMany(() => Subject, (subject) => subject.user)
-  subjects: Subject[];
-
-  // ✅ One-to-Many 관계: 한 유저가 여러 답안을 가질 수 있음
-  @OneToMany(() => Subject, (studentAnswer) => studentAnswer.user)
-  studentAnswer: Subject[];
 
 }
