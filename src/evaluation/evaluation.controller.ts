@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Sse, Param, Res, Header, Get, Req } from '@nestjs/common';
+import { Controller, Post, Body, Sse, Param, Res, Header, Get, Req, HttpCode } from '@nestjs/common';
 import { EvaluationService } from './evaluation.service';
 import { CreateSessionDto, studentAnswer } from '../dto/session.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -9,18 +9,26 @@ import { SessionStoreService } from './session-store.service';
 @ApiTags('/evaluation')
 @Controller('evaluation')
 export class EvaluationController {
-  constructor(private readonly evaluationService: EvaluationService,
+  constructor(
+    private readonly evaluationService: EvaluationService,
     private readonly sessionStoreService: SessionStoreService
   ) {}
 
+  // ✅ 세션 생성 (public API)
   @Post('create')
-  @Header('Access-Control-Allow-Origin', '*') // 여기만 CORS 열어줌
+  @Header('Access-Control-Allow-Origin', '*')
+  @Header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  @Header('Access-Control-Allow-Headers', 'Content-Type')
+  @HttpCode(201)
   async createSession(@Body() dto: CreateSessionDto) {
     return this.evaluationService.createSession(dto);
   }
-  
+
+  // ✅ SSE 연결 (public API)
   @Get('sse/:sessionKey')
-  @Header('Access-Control-Allow-Origin', '*') // 여기만 CORS 열어줌
+  @Header('Access-Control-Allow-Origin', '*')
+  @Header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  @Header('Access-Control-Allow-Headers', 'Content-Type')
   async connectSession(
     @Param('sessionKey') sessionKey: string,
     @Req() req: Request,
@@ -31,7 +39,7 @@ export class EvaluationController {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders(); // 헤더를 강제로 먼저 보냄
+    res.flushHeaders();
 
     const stream = this.evaluationService.createStream(sessionKey);
 
@@ -46,11 +54,12 @@ export class EvaluationController {
     });
   }
 
+  // ✅ 시험 화면 전달 (protected or open 둘 다 가능)
   @Get('exam/:sessionKey')
   async connectExam(
     @Res() res: Response,
   ) {
-    const filePath = path.join(__dirname, '..', '..', 'exam', 'main.html'); // 위치 주의
+    const filePath = path.join(__dirname, '..', '..', 'exam', 'main.html');
     res.sendFile(filePath);
   }
 
@@ -62,20 +71,20 @@ export class EvaluationController {
     res.sendFile(filePath);
   }
 
+  // ✅ 시험 문제 정보 (인증 필요, 전역 CORS 정책 적용)
   @Get('student/:sessionKey')
   async fetchExamInfomation(
     @Param('sessionKey') sessionKey: string,
-  ){
-    return this.sessionStoreService.examInfomation(sessionKey)
+  ) {
+    return this.sessionStoreService.examInfomation(sessionKey);
   }
 
+  // ✅ 답안 제출 (인증 필요, 전역 CORS 정책 적용)
   @Post('student/:sessionKey')
   async submitExam(
     @Param('sessionKey') sessionKey: string,
     @Body() body: studentAnswer
-  ){
-    return this.evaluationService.examSubmit(sessionKey, body)
+  ) {
+    return this.evaluationService.examSubmit(sessionKey, body);
   }
-
-
 }
