@@ -8,6 +8,6 @@ export class Room {
   @Column({ type: "varchar", length: 255 })
   roomTitle?: string;
 
-  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP", onUpdate: "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn({ type: 'timestamp' })
   connectedAt: Date;
 }

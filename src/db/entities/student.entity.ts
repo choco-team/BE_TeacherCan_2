@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, UpdateDateColumn } from "typeorm";
 import { Room } from "./room.entity";
 
 @Entity("students")
@@ -19,7 +19,7 @@ export class Student {
     @Column({ type: 'varchar', length: 255, unique: true })
     nameHash: string;  
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn({ type: 'timestamp' })
   visitedAt: Date;
 
   @ManyToOne(() => Room, (room) => room.id)

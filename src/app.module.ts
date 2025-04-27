@@ -6,12 +6,15 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
 import { RolesGuard } from './auth/role.guard';
-import { StudentModule } from './student/student.module';
 import { MusicModule } from './music/music.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CsrfInterceptor } from './interceptor/csrf.interceptor';
 import { CsrfMiddleware } from './middleware/csrf.middleware';
 import { RedisModule } from './redis/redis.module';
+import { EvaluationModule } from './evaluation/evaluation.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { SyncModule } from './sync/sync.module';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -20,9 +23,11 @@ import { RedisModule } from './redis/redis.module';
     ConfigModule.forRoot({
       isGlobal: true, // ✅ 전역 사용 가능하도록 설정
     }),
-    StudentModule,
     MusicModule,
-    RedisModule
+    RedisModule,
+    EvaluationModule,
+    ScheduleModule.forRoot(),
+    SyncModule
   ],
   providers: [
     {
@@ -36,7 +41,7 @@ import { RedisModule } from './redis/redis.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: CsrfInterceptor,
-    }
+    }, AppService
   ],
 })
 export class AppModule implements NestModule {

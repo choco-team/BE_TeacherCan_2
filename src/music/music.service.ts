@@ -78,7 +78,7 @@ async makeNewRoom(roomTitle: string) {
       musicList: musicList.map((music) => ({
         musicId: music.musicId,
         title: music.title,
-        student: studentList.find((s) => s.id === music.studentId)?.name,
+        student: music.student,
         timeStamp: music.timeStamp,
       })),
     };
@@ -123,6 +123,7 @@ async makeNewRoom(roomTitle: string) {
       musicId,
       title,
       roomId,
+      student: studentName,
       timeStamp: new Date().toISOString(),
     };
   
