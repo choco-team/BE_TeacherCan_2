@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Sse, Param, Res, Header, Get, Req, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Param, Res, Get, Req } from '@nestjs/common';
 import { EvaluationService } from './evaluation.service';
 import { CreateSessionDto, studentAnswer } from '../dto/session.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -16,19 +16,12 @@ export class EvaluationController {
 
   // ✅ 세션 생성 (public API)
   @Post('create')
-  @Header('Access-Control-Allow-Origin', '*')
-  @Header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  @Header('Access-Control-Allow-Headers', 'Content-Type')
-  @HttpCode(201)
   async createSession(@Body() dto: CreateSessionDto) {
     return this.evaluationService.createSession(dto);
   }
 
   // ✅ SSE 연결 (public API)
   @Get('sse/:sessionKey')
-  @Header('Access-Control-Allow-Origin', '*')
-  @Header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  @Header('Access-Control-Allow-Headers', 'Content-Type')
   async connectSession(
     @Param('sessionKey') sessionKey: string,
     @Req() req: Request,
