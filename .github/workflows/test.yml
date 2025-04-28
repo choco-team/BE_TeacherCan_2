@@ -32,6 +32,8 @@ jobs:
           username: ${{ secrets.GCP_VM_USERNAME }}
           key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
           script: |
+            set -e  # 실패시 즉시 종료 (에러 감지용)
+
             APP_PATH="/opt/app-test"
             cd $APP_PATH || (mkdir -p $APP_PATH && cd $APP_PATH)
 
@@ -104,11 +106,15 @@ jobs:
               mysql-data:
             EOF
 
-            echo "🧼 Stopping previous containers"
+            echo "🛑 Stopping previous containers"
             docker-compose down || true
 
-            echo "🚀 Running docker-compose up"
-            docker-compose up -d
+            echo "🚀 Pulling latest nginx-app-test image"
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx-app:dev
 
-            echo "✅ Deployed containers"
+            echo "🚀 Running docker-compose up with force recreate"
+            docker-compose up -d --force-recreate
+
+            echo "✅ Final container status:"
             docker ps -a
+
