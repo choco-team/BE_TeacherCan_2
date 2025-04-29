@@ -16,7 +16,7 @@ const isLocal = process.env.LOCAL === 'true';
 app.use(express.json());
 
 app.enableCors({
-  origin: ['http://localhost:3000', 'https://teachercan.com'],
+  origin: ['https://localhost:3000', 'https://teachercan.com'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization',
 });
