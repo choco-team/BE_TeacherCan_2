@@ -52,7 +52,7 @@ export class EvaluationController {
   async connectExam(
     @Res() res: Response,
   ) {
-    const filePath = path.join(__dirname, '..', '..', 'exam', 'main.html');
+    const filePath = path.join(process.cwd(), 'exam', 'main.html');
     res.sendFile(filePath);
   }
 
@@ -60,7 +60,7 @@ export class EvaluationController {
   async getMainJS(
     @Res() res: Response,
   ) {
-    const filePath = path.join(__dirname, '..', '..', 'exam', 'main.js');
+    const filePath = path.join(process.cwd(), 'exam', 'main.js');
     res.sendFile(filePath);
   }
 
