@@ -21,5 +21,5 @@ export const AppDataSource = new DataSource({
   extra: {
     authPlugins: 'caching_sha2_password'
   },
-  migrations: ['src/migrations/*.ts'],
+  migrations: ['dist/migrations/*.js']
 });
