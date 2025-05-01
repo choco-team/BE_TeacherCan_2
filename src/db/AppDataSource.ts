@@ -19,7 +19,7 @@ export const AppDataSource = new DataSource({
         port: Number(process.env.DATABASE_PORT) || 3306,
       }
     : {
-        socketPath: process.env.DB_SOCKET_PATH || '/teachercan',
+        socketPath: process.env.DB_SOCKET_PATH || '/cloudsql/teachercan-436815:asia-northeast1:teachercan',
       }),
   username: process.env.DATABASE_USER || 'root',
   password: process.env.DATABASE_PASSWORD || 'yourpassword',
