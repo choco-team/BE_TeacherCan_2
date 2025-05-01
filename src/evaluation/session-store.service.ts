@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
@@ -26,4 +26,17 @@ export class SessionStoreService {
     const key = `session:${sessionKey}:${studentId}`;
     await this.redisService.getClient().set(key, JSON.stringify(data), 'EX', 7200); // TTL 2시간
   }
+  
+
+  async getStudentAnswerSheet(sessionKey: string,  studentId: string){
+    try{
+    const key = `session:${sessionKey}:${studentId}`;
+    const data = await this.redisService.getClient().get(key);
+    return data
+  } catch (error){
+        throw new HttpException('클라이언트로 답안 송신에 실패하였습니다' + error, HttpStatus.INTERNAL_SERVER_ERROR)
+  
+  }
+}
+
 }

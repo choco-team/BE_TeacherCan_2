@@ -19,4 +19,15 @@ export class SessionStreamService {
     }
     this.sessionStreams.delete(sessionKey);
   }
+
+  register(sessionKey: string, res: Response): void {
+    this.sessionStreams.set(sessionKey, res);
+
+    // 연결 유지 설정
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+}
 }
