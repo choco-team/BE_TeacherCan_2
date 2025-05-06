@@ -17,9 +17,6 @@ export class Music {
   studentId: number;
 
   @Column({ type: "varchar", length: 255, nullable: true })
-  nickname: string;
-
-  @Column({ type: "varchar", length: 255, nullable: true })
   title?: string;
 
   @CreateDateColumn({ type: "timestamp" })

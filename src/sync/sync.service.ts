@@ -33,7 +33,6 @@ export class SyncService {
 
     await this.redisService.hset(key, {
       musicId: music.musicId,
-      nickname: music.nickname || '',
       title: music.title || '',
       roomId: music.roomId,
       studentId: music.studentId ? music.studentId.toString() : '',
