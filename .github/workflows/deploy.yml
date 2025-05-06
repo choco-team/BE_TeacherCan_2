@@ -1,7 +1,7 @@
 name: Deploy to GCP
 
 on:
-  workflow_dispatch: [ new-main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
