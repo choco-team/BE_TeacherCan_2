@@ -1,14 +1,26 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query, Sse } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto,  } from 'src/dto/music.dto';
+import { AddMusicInRoomDto, DeleteMusicInRoomDto, MusicListResDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
-
+import { map } from 'rxjs';
 @ApiTags('/music-request')
 @Controller('/music-request')
 export class MusicController {
       constructor(
         private readonly musicService: MusicService,
     ) {}
+            @Sse('/sse')
+            @ApiOperation({summary: '음악 목록 sse연결 요청', description: '음악 목록에 대한 sse연결을 요청합니다.'})
+            @ApiResponse( {status: 200, description: "음악 목록을 받아옵니다.", type: MusicListResDto })
+            streamMusicList(@Query('roomId') roomId: string){
+                const stream = this.musicService.getStream(roomId);
+                return stream.asObservable().pipe(
+                    map((data) => ({
+                        event: 'music-list',
+                        data,
+                    })),
+                );
+            }
 
             @Post('/room')
             @ApiOperation({summary: '방 생성', description: '음악 추천을 위한 방을 생성합니다'})
@@ -44,8 +56,11 @@ export class MusicController {
             @ApiOperation({summary: '음악 신청 정보 생성', description: '신청한 음악을 기록합니다'})
             @ApiBody({type:AddMusicInRoomDto})
             async addMusicInRoom(@Body() body:AddMusicInRoomDto){
-               const {roomId, musicId, title, student} = body
-                return await this.musicService.addMusicInRoom(roomId, musicId, title, student)
+                const {roomId, musicId, title, student} = body
+                await this.musicService.addMusicInRoom(roomId, musicId, title, student)
+                const updatedMusicList = await this.musicService.getMusicList(roomId);
+                this.musicService.sendToRoom(roomId, { musicList: updatedMusicList });
+                return { success: true }
             }
 
             @Delete('/music')

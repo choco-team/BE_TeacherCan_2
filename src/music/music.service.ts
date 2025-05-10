@@ -3,6 +3,8 @@ import { RedisService } from 'src/redis/redis.service';
 import { CryptoService } from 'src/services/crypto.service';
 import { v4 as uuidv4} from 'uuid'
 import { MusicSQLService } from './music.sql.service';
+import { Subject } from 'rxjs';
+
 
 @Injectable()
 export class MusicService {
@@ -12,6 +14,22 @@ constructor(
         private readonly musicSQLService: MusicSQLService
 ) {}
 
+
+private streams: Map<string, Subject<any>> = new Map();
+
+getStream(roomId: string) {
+  if (!this.streams.has(roomId)) {
+    this.streams.set(roomId, new Subject());
+  }
+  return this.streams.get(roomId);
+}
+
+sendToRoom(roomId: string, data: any) {
+  const stream = this.streams.get(roomId);
+  if (stream) {
+    stream.next(data);
+  }
+}
 
 async makeNewRoom(roomTitle: string) {
     const roomId = uuidv4(); // 고유 ID 생성
@@ -133,7 +151,7 @@ async makeNewRoom(roomTitle: string) {
     return { success: true };
   }
     
-  private async getMusicList(roomId: string) {
+  async getMusicList(roomId: string) {
     const redis = this.redisService.getClient();
     const key = `room:${roomId}:musicList`;
     const raw = await redis.get(key);
