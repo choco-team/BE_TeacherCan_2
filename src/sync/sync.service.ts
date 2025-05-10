@@ -1,42 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Music } from '../db/entities/music.entity'; // 경로 주의
-import { Repository, MoreThan } from 'typeorm';
+import { Music } from '../db/entities/music.entity';
+import { Repository } from 'typeorm';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class SyncService {
-  private lastSyncedAt: Date = new Date(0); // 서버 시작 후 첫 싱크는 전체
-
   constructor(
     @InjectRepository(Music)
     private readonly musicRepository: Repository<Music>,
     private readonly redisService: RedisService,
   ) {}
 
-  async syncMusicRequestsToRedis() {
-    const updatedMusics = await this.musicRepository.find({
-      where: {
-        updatedAt: MoreThan(this.lastSyncedAt),
-      },
-    });
+  async syncRedisToDatabase() {
+    const redisClient = this.redisService.getClient();
+    const keys = await redisClient.keys('music:*');
 
-    for (const music of updatedMusics) {
-      await this.updateMusicToRedis(music);
+    for (const key of keys) {
+      const data = await redisClient.hgetall(key);
+
+      if (!data.musicId) continue; // 필수 필드 없으면 무시
+
+      const existing = await this.musicRepository.findOne({ where: { musicId: data.musicId } });
+
+      const music = this.musicRepository.create({
+        musicId: data.musicId,
+        title: data.title || null,
+        roomId: data.roomId || null,
+        studentId: data.studentId ? parseInt(data.studentId, 10) : null,
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+      });
+
+      if (existing) {
+        // update
+        music.id = existing.id;
+        await this.musicRepository.save(music);
+      } else {
+        // insert
+        await this.musicRepository.insert(music);
+      }
     }
-
-    this.lastSyncedAt = new Date();
-  }
-
-  private async updateMusicToRedis(music: Music) {
-    const key = `music:${music.id}`;
-
-    await this.redisService.hset(key, {
-      musicId: music.musicId,
-      title: music.title || '',
-      roomId: music.roomId,
-      studentId: music.studentId ? music.studentId.toString() : '',
-      updatedAt: music.updatedAt.toISOString(),
-    });
   }
 }
