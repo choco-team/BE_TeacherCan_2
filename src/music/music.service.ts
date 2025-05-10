@@ -133,7 +133,7 @@ async makeNewRoom(roomTitle: string) {
     return { success: true };
   }
     
-  private async getMusicList(roomId: string) {
+  async getMusicList(roomId: string) {
     const redis = this.redisService.getClient();
     const key = `room:${roomId}:musicList`;
     const raw = await redis.get(key);

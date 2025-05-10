@@ -1,7 +1,11 @@
-import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query, Sse, Param, Res} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto,  } from 'src/dto/music.dto';
+import { AddMusicInRoomDto, DeleteMusicInRoomDto, MusicListResDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto,  } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
+import { Observable, interval, from, map, switchMap, startWith, distinctUntilChanged } from 'rxjs';
+import deepEqual from 'fast-deep-equal';
+import { Response } from 'express';
+
 
 @ApiTags('/music-request')
 @Controller('/music-request')
@@ -9,6 +13,25 @@ export class MusicController {
       constructor(
         private readonly musicService: MusicService,
     ) {}
+
+            @Sse('asd')
+            sse(): Observable<MessageEvent> {
+
+            return interval(1000).pipe(map((_) => ({ data: { hello: 'world' } } as MessageEvent)));
+            }
+
+            @Sse('asd/:roomId')
+            @ApiOperation({summary: '음악 목록 sse연결 요청', description: '음악 목록에 대한 sse연결을 요청합니다.'})
+            @ApiResponse( {description: "음악 목록을 받아옵니다.", type: MusicListResDto })
+            streamMusicList(@Param('roomId') roomId: string): Observable<MessageEvent> {
+            return interval(3000).pipe(
+                startWith(0),
+                switchMap(() => from(this.musicService.getMusicList(roomId))),
+                map((musicList) => ({
+                data: musicList,
+                }as MessageEvent)),
+            );
+            }
 
             @Post('/room')
             @ApiOperation({summary: '방 생성', description: '음악 추천을 위한 방을 생성합니다'})
@@ -25,12 +48,12 @@ export class MusicController {
             return await this.musicService.getRoomTitle(roomId)                
             }
 
-            @Get()
-            @ApiOperation({summary: '방 상세 정보 가져오기', description: '방의 상세 정보를 가져옵니다'})
-            @ApiResponse( {description: "방의 상제 정보를 가져옵니다", type: RoomTitleDto})
-            async getRoomInformation(@Query('roomId') roomId:string){
-                return await this.musicService.getRoomInformation(roomId)                
-                }
+            // @Get()
+            // @ApiOperation({summary: '방 상세 정보 가져오기', description: '방의 상세 정보를 가져옵니다'})
+            // @ApiResponse( {description: "방의 상제 정보를 가져옵니다", type: RoomTitleDto})
+            // async getRoomInformation(@Query('roomId') roomId:string){
+            //     return await this.musicService.getRoomInformation(roomId)                
+            //     }
 
             @Post('/student')
             @ApiOperation({summary: '방에 학생 정보 생성', description: '방의 입장한 학생의 정보를 생성합니다'})

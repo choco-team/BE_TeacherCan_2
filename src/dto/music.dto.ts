@@ -5,6 +5,22 @@ export class RoomTitleDto {
     roomTitle: string;
 }
 
+class MusicList {
+    @ApiProperty({example: "cbuZfY2S2UQ"})
+    musicId: string;
+    @ApiProperty({example: "[ 𝑷𝒍𝒂𝒚𝒍𝒊𝒔𝒕 ] 코딩할때 듣기 좋은 노래"})
+    title: string;
+    @ApiProperty({example: "홍길동"})
+    student: string;
+    @ApiProperty({example: "2025-05-01T12:37:49.436Z"})
+    timeStamp: string;
+}
+
+export class MusicListResDto {
+    @ApiProperty({example: MusicList, description: "방 제목을 정해 방을 새로 생성합니다"})
+    asd: MusicList[];
+}
+
 export class RoomIdDto {
     @ApiProperty({example: "4923c544-0c2e-4383-b40d-985b304ef05a", description: "방 ID를 전송합니다"})
     roomId: string;

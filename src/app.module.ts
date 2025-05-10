@@ -14,6 +14,8 @@ import { RedisModule } from './redis/redis.module';
 import { EvaluationModule } from './evaluation/evaluation.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SyncModule } from './sync/sync.module';
+import * as cookieParser from 'cookie-parser';
+
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { SyncModule } from './sync/sync.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(cookieParser()).forRoutes('*');
     consumer.apply(CsrfMiddleware).forRoutes('*');
   }
 }

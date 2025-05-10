@@ -1,6 +1,5 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express'
@@ -8,19 +7,31 @@ import * as express from 'express'
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-
 // CORS 설정하기
 const isLocal = process.env.LOCAL === 'true';
 
+app.use((req, res, next) => {
+  // if (req.path.startsWith('/music-request/asd')) {
+  //   console.log("@@@@@@@asdasdq123123132",req.path)
 
-app.use(express.json());
+  //   next();
+  // } else {
+    express.json()(req, res, next);
+  // }
+});
+
+// app.enableCors({
+//   origin: ['http://localhost:3000', 'https://teachercan.com'],
+//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   exposedHeaders: ['Content-Type', 'Authorization'],
+// });
 
 app.enableCors({
   origin: ['http://localhost:3000', 'https://teachercan.com'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization',
 });
-
 
 if (process.env.LOCAL==="true"){
   // Swagger 설정
@@ -40,9 +51,6 @@ if (process.env.LOCAL==="true"){
 }
 
 
-
-  // ✅ 쿠키 파서를 전역 미들웨어로 추가
-  app.use(cookieParser());
   // ✅ 글로벌 파이프 설정 (DTO 유효성 검사)
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
