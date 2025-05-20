@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Post, Query, Sse } from '@nestjs/common'
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AddMusicInRoomDto, DeleteMusicInRoomDto, MusicListResDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
-import { map } from 'rxjs';
+import { concat, map, Observable } from 'rxjs';
 @ApiTags('/music-request')
 @Controller('/music-request')
 export class MusicController {
@@ -12,14 +12,25 @@ export class MusicController {
             @Sse('/sse')
             @ApiOperation({summary: '음악 목록 sse연결 요청', description: '음악 목록에 대한 sse연결을 요청합니다.'})
             @ApiResponse( {status: 200, description: "음악 목록을 받아옵니다.", type: MusicListResDto })
-            streamMusicList(@Query('roomId') roomId: string){
+            async streamMusicList(@Query('roomId') roomId: string){
                 const stream = this.musicService.getStream(roomId);
-                return stream.asObservable().pipe(
-                    map((data) => ({
+                const initialData = await this.musicService.getMusicList(roomId);
+                const initialEvent = new Observable((observer) => {
+                    observer.next({
                         event: 'music-list',
-                        data,
-                    })),
-                );
+                        data: initialData,
+                    });
+                    observer.complete();
+                });
+                return concat(
+                    initialEvent,
+                    stream.asObservable().pipe(
+                        map((data) => ({
+                            event: 'music-list',
+                            data,
+                        })),
+                    )
+                )
             }
 
             @Post('/room')
