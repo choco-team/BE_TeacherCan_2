@@ -18,14 +18,11 @@ export class SessionStreamService {
     this.redisPubSubService.subscribePattern('stream:*', this.handleStreamMessage.bind(this));
   }
 
-  register(sessionKey: string, res: Response): void {
-    this.sessionStreams.set(sessionKey, res);
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    });
-  }
+register(sessionKey: string, res: Response): void {
+  this.sessionStreams.set(sessionKey, res);
+  console.log('✅ SSE 세션 등록됨:', sessionKey);
+}
+
 
   send(sessionKey: string, data: any): void {
     const res = this.sessionStreams.get(sessionKey);
@@ -47,9 +44,27 @@ export class SessionStreamService {
     });
   }
 
-private handleStreamMessage(channel: string, message: any) {
-  const sessionKey = channel.split(':')[1];
-  console.log(`[Redis] 수신된 메시지 → ${sessionKey}`, message); // 이 로그 꼭 있어야 함
-  this.send(sessionKey, message);
+private async handleStreamMessage(channel: string, message: string) {
+  console.log('✅ handleStreamMessage 호출됨');
+  console.log('채널:', channel);
+  console.log('메시지:', message);
+
+  const sessionKey = channel.split(':')[1].trim();
+  const res = this.sessionStreams.get(sessionKey);
+
+  if (!res) {
+    console.warn('[SSE] 해당 sessionKey에 연결된 res 없음:', sessionKey);
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = typeof message === 'string' ? JSON.parse(message) : message;
+  } catch {
+    console.warn('[SSE] 메시지 JSON 파싱 실패:', message);
+    parsed = { raw: message };
+  }
+
+  res.write(`data: ${JSON.stringify(parsed)}\n\n`);
 }
 }

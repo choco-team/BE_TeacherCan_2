@@ -33,7 +33,11 @@ export class SessionStoreService {
     const key = `session:${sessionKey}:${studentId}`;
     const data = await this.redisService.getClient().get(key);
   } catch (error){
-        throw new HttpException('클라이언트로 답안 송신에 실패하였습니다' + error, HttpStatus.INTERNAL_SERVER_ERROR)
+
+    throw new HttpException(
+  { message: '클라이언트로 답안 송신에 실패하였습니다', detail: error?.message ?? error.toString() },
+  HttpStatus.INTERNAL_SERVER_ERROR,
+);
   
   }
 }

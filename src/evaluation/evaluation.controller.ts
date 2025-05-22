@@ -33,16 +33,16 @@ export class EvaluationController {
   ) {
     console.log('[SSE] connected:', sessionKey);
 
-    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
-
+    this.sessionStreamService.register(sessionKey, res); // 추가
     const stream = this.evaluationService.createStream(sessionKey);
 
     stream.on('data', (data: string) => {
+      console.log('→ SSE write', sessionKey, data);
       res.write(data);
-      console.log(data)
 
     });
 
@@ -80,7 +80,7 @@ export class EvaluationController {
 
 
 @Get('session/stream/:sessionKey')
-@Header('Content-Type', 'text/event-stream')
+@Header('Content-Type', 'text/event-stream; charset=utf-8')
 @Header('Cache-Control', 'no-cache')
 @Header('Connection', 'keep-alive')
 public stream(@Param('sessionKey') sessionKey: string, @Res() res: Response) {
@@ -89,7 +89,7 @@ public stream(@Param('sessionKey') sessionKey: string, @Res() res: Response) {
   this.sessionStreamService.register(sessionKey, res);
 
   // 🔥 최소 한 번은 write 해줘야 클라이언트 on('data')가 실행됨
-  res.write(`data: ${JSON.stringify({ hello: 'connected' })}\n\n`);
+res.write(`data: ${JSON.stringify({ sessionKey, connected: true })}\n\n`);
 }
 
 
