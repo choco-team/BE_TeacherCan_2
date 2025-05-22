@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Request, Response } from 'express';
 import { SessionStoreService } from './session-store.service';
 import { SessionStreamService } from './session-stream.service';
+import { RedisPubSubService } from 'src/redis/redisPubSub.service';
 
 @ApiTags('/evaluation')
 @Controller('evaluation')
@@ -13,7 +14,8 @@ export class EvaluationController {
   constructor(
     private readonly evaluationService: EvaluationService,
     private readonly sessionStoreService: SessionStoreService,
-    private readonly sessionStreamService: SessionStreamService
+    private readonly sessionStreamService: SessionStreamService,
+    private readonly redisPubSubService: RedisPubSubService
   ) {}
 
   // ✅ 세션 생성 (public API)
@@ -29,7 +31,7 @@ export class EvaluationController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    console.log('[SSE] 연결 요청됨:', sessionKey);
+    console.log('[SSE] connected:', sessionKey);
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -40,10 +42,12 @@ export class EvaluationController {
 
     stream.on('data', (data: string) => {
       res.write(data);
+      console.log(data)
+
     });
 
     req.on('close', () => {
-      console.log('[SSE] 연결 끊김:', sessionKey);
+      console.log('[SSE] disconnected:', sessionKey);
       this.evaluationService.closeStream(sessionKey);
       res.end();
     });
@@ -75,32 +79,36 @@ export class EvaluationController {
   }
 
 
-  @Get('session/stream/:sessionKey')
+@Get('session/stream/:sessionKey')
 @Header('Content-Type', 'text/event-stream')
 @Header('Cache-Control', 'no-cache')
 @Header('Connection', 'keep-alive')
 public stream(@Param('sessionKey') sessionKey: string, @Res() res: Response) {
+  console.log('✅ SSE 연결 요청 들어옴:', sessionKey);
+
   this.sessionStreamService.register(sessionKey, res);
+
+  // 🔥 최소 한 번은 write 해줘야 클라이언트 on('data')가 실행됨
+  res.write(`data: ${JSON.stringify({ hello: 'connected' })}\n\n`);
 }
 
 
-  // ✅ 답안 제출 (인증 필요, 전역 CORS 정책 적용)
-  @Post('student/:sessionKey')
-  async submitExam(
-    @Param('sessionKey') sessionKey: string,
-    @Body() body: studentAnswer
-  ) {
-    console.log('답안 제출')
-    return this.evaluationService.examSubmit(sessionKey, body);
-  }
-
-  @Get('exam-session/:sessionKey/:studentId')
-async getStudentAnswer(
+@Post('student/:sessionKey')
+async submitExam(
   @Param('sessionKey') sessionKey: string,
-  @Param('studentId') studentId: string,
+  @Body() body: studentAnswer
 ) {
-  console.log('제출된 답안 송신중')
-return this.sessionStoreService.getStudentAnswerSheet(sessionKey, studentId)
+  console.log('세션키: ', sessionKey , '답안 :', body);
+  const result = await this.evaluationService.examSubmit(sessionKey, body);
+  console.log('데이터 :', result)
+
+  // ✅ 직접 send 대신 Redis publish
+  await this.redisPubSubService.publish(`stream:${sessionKey}`, result);
+
+  return result;
 }
+
+
+
 
 }

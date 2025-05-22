@@ -50,7 +50,7 @@ export class EvaluationService {
     try{
     const {student, answer} = body
     await this.sessionStore.saveStudentSession(sessionKey, String(student), answer)
-    this.sessionStream.send(sessionKey, JSON.stringify({number:student, time: Date.now()}))
+    return {answer, number:student, time: Date.now()}
     } catch (error){
     throw new HttpException('서버에 답안 제출이 실패하였습니다' + error, HttpStatus.INTERNAL_SERVER_ERROR)
   }
