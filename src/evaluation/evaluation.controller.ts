@@ -108,7 +108,13 @@ async submitExam(
   return result;
 }
 
-
+  @Get('/:sessionKey/:student')
+async fetchExamData(
+  @Param(`sessionKey`) sessionKey: string,
+  @Param(`student`) student: number
+){
+  return await this.sessionStoreService.fetchExamData(sessionKey, student);
+}
 
 
 }

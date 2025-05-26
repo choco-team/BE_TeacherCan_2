@@ -42,4 +42,11 @@ export class SessionStoreService {
   }
 }
 
+  async fetchExamData(sessionKey:string, studentNumber: number){
+    const result = await this.redisService.getClient().get(`session:${sessionKey}:${studentNumber}`);
+    if (!result) throw new HttpException('답안지 자료 송신에 실패했습니다', HttpStatus.NOT_FOUND)
+    return result
+  }
+
+
 }
