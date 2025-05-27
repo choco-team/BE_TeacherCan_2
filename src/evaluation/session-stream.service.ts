@@ -18,10 +18,17 @@ export class SessionStreamService {
     this.redisPubSubService.subscribePattern('stream:*', this.handleStreamMessage.bind(this));
   }
 
-register(sessionKey: string, res: Response): void {
+register(sessionKey: string, res: Response) {
+  if (this.sessionStreams.has(sessionKey)) {
+    console.log(`[SSE] 기존 세션 ${sessionKey} 연결 덮어쓰기`);
+  }
   this.sessionStreams.set(sessionKey, res);
-  console.log('✅ SSE 세션 등록됨:', sessionKey);
 }
+
+unregister(sessionKey: string) {
+  this.sessionStreams.delete(sessionKey);
+}
+
 
 
   send(sessionKey: string, data: any): void {

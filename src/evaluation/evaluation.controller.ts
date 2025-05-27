@@ -24,35 +24,6 @@ export class EvaluationController {
     return this.evaluationService.createSession(dto);
   }
 
-  // ✅ SSE 연결 (public API)
-  @Get('sse/:sessionKey')
-  async connectSession(
-    @Param('sessionKey') sessionKey: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
-    console.log('[SSE] connected:', sessionKey);
-
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
-    this.sessionStreamService.register(sessionKey, res); // 추가
-    const stream = this.evaluationService.createStream(sessionKey);
-
-    stream.on('data', (data: string) => {
-      console.log('→ SSE write', sessionKey, data);
-      res.write(data);
-
-    });
-
-    req.on('close', () => {
-      console.log('[SSE] disconnected:', sessionKey);
-      this.evaluationService.closeStream(sessionKey);
-      res.end();
-    });
-  }
-
   // ✅ 시험 화면 전달 (protected or open 둘 다 가능)
   @Get('exam/:sessionKey')
   async connectExam(
@@ -79,17 +50,28 @@ export class EvaluationController {
   }
 
 
-@Get('session/stream/:sessionKey')
+@Get('sse/:sessionKey')
 @Header('Content-Type', 'text/event-stream; charset=utf-8')
 @Header('Cache-Control', 'no-cache')
 @Header('Connection', 'keep-alive')
-public stream(@Param('sessionKey') sessionKey: string, @Res() res: Response) {
+public stream(
+  @Param('sessionKey') sessionKey: string,
+  @Res() res: Response,
+  @Req() req: Request
+) {
   console.log('✅ SSE 연결 요청 들어옴:', sessionKey);
 
+  // SSE 등록
   this.sessionStreamService.register(sessionKey, res);
 
-  // 🔥 최소 한 번은 write 해줘야 클라이언트 on('data')가 실행됨
-res.write(`data: ${JSON.stringify({ sessionKey, connected: true })}\n\n`);
+  // 초기 응답 (최소 한 번은 write 해야 onmessage 작동)
+  res.write(`data: ${JSON.stringify({ sessionKey, connected: true })}\n\n`);
+
+  // 연결 종료 시 정리
+  req.on('close', () => {
+    console.warn(`❌ SSE 연결 끊김: ${sessionKey}`);
+    this.sessionStreamService.unregister(sessionKey); // 등록 해제
+  });
 }
 
 
