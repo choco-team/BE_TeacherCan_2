@@ -18,7 +18,7 @@ export class MusicController {
                 const initialEvent = new Observable((observer) => {
                     observer.next({
                         event: 'music-list',
-                        data: initialData,
+                        data: {musicList: initialData},
                     });
                     observer.complete();
                 });
@@ -78,8 +78,11 @@ export class MusicController {
             @ApiOperation({summary: '신청된 음악 정보 삭제', description: '신청된 음악을 삭제합니다'})
             @ApiBody({type:DeleteMusicInRoomDto})
             async removeMusicInRoom(@Body() body:DeleteMusicInRoomDto){
-               const {roomId, musicId} = body
-                return await this.musicService.removeMusicInRoom(roomId, musicId)
+                const {roomId, musicId} = body
+                await this.musicService.removeMusicInRoom(roomId, musicId)
+                const updatedMusicList = await this.musicService.getMusicList(roomId);
+                this.musicService.sendToRoom(roomId, { musicList: updatedMusicList });
+                return { success: true }
             }
             
 }
