@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 @Injectable()
@@ -6,19 +7,22 @@ export class RedisPubSubService {
   private publisher: Redis;
   private subscriber: Redis;
 
-  constructor() {
-    // Redis 연결
-    this.publisher = new Redis();    // pub용
-    this.subscriber = new Redis();   // sub용
+  constructor(private readonly configService: ConfigService) {
+    const host = this.configService.get<string>('REDIS_HOST', 'localhost');
+    const port = this.configService.get<number>('REDIS_PORT', 6379);
+
+    this.publisher = new Redis({ host, port });
+    this.subscriber = new Redis({ host, port });
+
+    this.publisher.on('error', err => console.error('[RedisPubSub] Pub error:', err));
+    this.subscriber.on('error', err => console.error('[RedisPubSub] Sub error:', err));
   }
 
-  // ✅ 메시지 publish
   async publish(channel: string, message: any): Promise<void> {
     const payload = JSON.stringify(message);
     await this.publisher.publish(channel, payload);
   }
 
-  // ✅ 특정 채널 subscribe
   subscribe(channel: string, handler: (message: any) => void): void {
     this.subscriber.subscribe(channel, (err, count) => {
       if (err) {
@@ -40,29 +44,28 @@ export class RedisPubSubService {
     });
   }
 
-  // ✅ 패턴 기반 구독 (stream:*)
-subscribePattern(
-  pattern: string,
-  handler: (channel: string, message: any) => void | Promise<void>,
-): void {
-  this.subscriber.psubscribe(pattern, (err, count) => {
-    if (err) {
-      console.error(`[Redis] Failed to psubscribe to ${pattern}:`, err);
-    } else {
-      console.log(`[Redis] Pattern-subscribed to ${pattern} (${count} patterns)`);
-    }
-  });
+  subscribePattern(
+    pattern: string,
+    handler: (channel: string, message: any) => void | Promise<void>,
+  ): void {
+    this.subscriber.psubscribe(pattern, (err, count) => {
+      if (err) {
+        console.error(`[Redis] Failed to psubscribe to ${pattern}:`, err);
+      } else {
+        console.log(`[Redis] Pattern-subscribed to ${pattern} (${count} patterns)`);
+      }
+    });
 
-  this.subscriber.on('pmessage', async (_pattern, receivedChannel, rawMessage) => {
-    console.log(`[Redis] [pmessage] channel: ${receivedChannel}`);
-    console.log(`[Redis] [pmessage] raw:`, rawMessage);
+    this.subscriber.on('pmessage', async (_pattern, receivedChannel, rawMessage) => {
+      console.log(`[Redis] [pmessage] channel: ${receivedChannel}`);
+      console.log(`[Redis] [pmessage] raw:`, rawMessage);
 
-    try {
-      const parsed = JSON.parse(rawMessage);
-      await handler(receivedChannel, parsed);
-    } catch (err) {
-      console.error(`[Redis] Failed to parse/handle message on ${receivedChannel}:`, err);
-    }
-  });
-}
+      try {
+        const parsed = JSON.parse(rawMessage);
+        await handler(receivedChannel, parsed);
+      } catch (err) {
+        console.error(`[Redis] Failed to parse/handle message on ${receivedChannel}:`, err);
+      }
+    });
+  }
 }
