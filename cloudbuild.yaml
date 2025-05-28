@@ -14,4 +14,4 @@ steps:
 artifacts:
   objects:
     location: 'gs://$PROJECT_ID-cloudbuild-artifacts/'
-    paths: ['dist/**']
+    paths: ['dist/**', 'exam/**']  # ✅ exam도 포함시킴
