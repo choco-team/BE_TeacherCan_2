@@ -17,7 +17,7 @@ WORKDIR /app
 # 앱 실행에 필요한 dist와 정적 파일을 각각 복사
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/exam ./dist/exam  # ✅ 정적 파일 직접 복사
+COPY --from=builder /app/exam ./exam  # ✅ 정적 파일 직접 복사
 
 RUN npm install --only=production
 
