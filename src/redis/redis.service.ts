@@ -1,4 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 @Injectable()
@@ -6,15 +7,17 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private pubClient: Redis; // publish 및 일반 작업용
   private subClient: Redis; // subscribe 전용
 
+  constructor(private readonly configService: ConfigService) {}
+
   async onModuleInit() {
     this.pubClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: +(process.env.REDIS_PORT || 6379),
+  host: this.configService.get<string>('REDIS_HOST', 'localhost'),
+  port: this.configService.get<number>('REDIS_PORT', 6379),
     });
 
     this.subClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: +(process.env.REDIS_PORT || 6379),
+  host: this.configService.get<string>('REDIS_HOST', 'localhost'),
+  port: this.configService.get<number>('REDIS_PORT', 6379),
     });
 
     this.pubClient.on('connect', () => {
