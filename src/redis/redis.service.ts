@@ -5,6 +5,7 @@ import Redis from 'ioredis';
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private pubClient: Redis; // publish 및 일반 작업용
   private subClient: Redis; // subscribe 전용
+  private subscribedChannels: Set<string> = new Set(); // 구독 중인 채널 목록
 
   async onModuleInit() {
     this.pubClient = new Redis({
@@ -49,6 +50,28 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  async listenToChannel(channel: string, callback: (message: string) => void) {
+    if (!this.subscribedChannels.has(channel)) {
+      await this.subClient.subscribe(channel);
+      this.subscribedChannels.add(channel);
+    }
+
+    this.subClient.on('message', (subscribedChannel, message) => {
+      if (subscribedChannel === channel) {
+        callback(message);
+      }
+    });
+  }
+
+  
+  async unsubscribe(channel: string) {
+    if (this.subscribedChannels.has(channel)) {
+      await this.subClient.unsubscribe(channel);
+      this.subscribedChannels.delete(channel);
+    }
+  }
+
+
   // 일반 키-밸류 작업용
   getClient(): Redis {
     return this.pubClient;
@@ -82,6 +105,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
+    console.log('[Redis] Cleaning up connections...');
+    for (const channel of this.subscribedChannels) {
+      await this.subClient.unsubscribe(channel);
+    }
+    this.subscribedChannels.clear();
+    
     await this.pubClient.quit();
     await this.subClient.quit();
   }

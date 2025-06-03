@@ -1,37 +1,48 @@
-import { Body, Controller, Delete, Get, Post, Query, Sse } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query, Req, Sse } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AddMusicInRoomDto, DeleteMusicInRoomDto, MusicListResDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto } from 'src/dto/music.dto';
+import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
-import { concat, map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
+import { RedisService } from 'src/redis/redis.service';
 @ApiTags('/music-request')
 @Controller('/music-request')
 export class MusicController {
       constructor(
         private readonly musicService: MusicService,
+        private readonly redisService: RedisService,
     ) {}
             @Sse('/sse')
-            @ApiOperation({summary: '음악 목록 sse연결 요청', description: '음악 목록에 대한 sse연결을 요청합니다.'})
-            @ApiResponse( {status: 200, description: "음악 목록을 받아옵니다.", type: MusicListResDto })
-            async streamMusicList(@Query('roomId') roomId: string){
-                const stream = this.musicService.getStream(roomId);
+            async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request) {
+                const channel = `room:${roomId}:channel`;
                 const initialData = await this.musicService.getMusicList(roomId);
-                const initialEvent = new Observable((observer) => {
+
+                return new Observable((observer) => {
                     observer.next({
-                        event: 'music-list',
-                        data: {musicList: initialData},
+                    event: 'music-list',
+                    data: { musicList: initialData },
                     });
-                    observer.complete();
-                });
-                return concat(
-                    initialEvent,
-                    stream.asObservable().pipe(
-                        map((data) => ({
+
+                    const listener = (message: string) => {
+                        try {
+                            observer.next({
                             event: 'music-list',
-                            data,
-                        })),
-                    )
-                )
-            }
+                            data: JSON.parse(message),
+                            });
+                        } catch (err) {
+                            console.error('SSE 메시지 파싱 실패:', err);
+                        }
+                        };
+                    this.redisService.listenToChannel(channel, listener);
+                    
+                    const res = (req as any).res;
+                    res.on('close', async () => {
+                    console.log(`[SSE] Client disconnected from room ${roomId}`);
+                    await this.redisService.unsubscribe(channel);
+                    observer.complete();
+                    });
+
+                });
+                }
 
             @Post('/room')
             @ApiOperation({summary: '방 생성', description: '음악 추천을 위한 방을 생성합니다'})

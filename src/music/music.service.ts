@@ -3,8 +3,6 @@ import { RedisService } from 'src/redis/redis.service';
 import { CryptoService } from 'src/services/crypto.service';
 import { v4 as uuidv4} from 'uuid'
 import { MusicSQLService } from './music.sql.service';
-import { Subject } from 'rxjs';
-
 
 @Injectable()
 export class MusicService {
@@ -14,21 +12,14 @@ constructor(
         private readonly musicSQLService: MusicSQLService
 ) {}
 
-
-private streams: Map<string, Subject<any>> = new Map();
-
-getStream(roomId: string) {
-  if (!this.streams.has(roomId)) {
-    this.streams.set(roomId, new Subject());
-  }
-  return this.streams.get(roomId);
+async sendToRoom(roomId: string, data: any) {
+  const channel = `room:${roomId}:channel`;
+  await this.redisService.publish(channel, JSON.stringify(data));
 }
 
-sendToRoom(roomId: string, data: any) {
-  const stream = this.streams.get(roomId);
-  if (stream) {
-    stream.next(data);
-  }
+async unsubscribeFromRoom(roomId: string) {
+  const channel = `room:${roomId}:channel`;
+  await this.redisService.unsubscribe(channel);
 }
 
 async makeNewRoom(roomTitle: string) {
