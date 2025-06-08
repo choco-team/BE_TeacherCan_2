@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
 export class RoomTitleDto {
     @ApiProperty({example: "5학년 1반", description: "방 제목을 정해 방을 새로 생성합니다"})
@@ -39,3 +40,31 @@ export class DeleteMusicInRoomDto{
     @ApiProperty({example: "cbuZfY2S2UQ", description: "음악 ID를 전송합니다"})
     musicId: string;
 }
+
+export class MusicDto {
+    @ApiProperty({ description: '음악의 고유 식별자', example: "cbuZfY2S2UQ" })
+    @IsString()
+    musicId: string;
+  
+    @ApiProperty({ description: '음악 제목' , example: "[ 𝑷𝒍𝒂𝒚𝒍𝒊𝒔𝒕 ] 코딩할때 듣기 좋은 노래"})
+    @IsString()
+    title: string;
+  
+    @ApiProperty({ description: '룸 ID', example: "272c87df-bf82-4012-bc76-f510714abcd3"})
+    @IsString()
+    roomId: string;
+  
+    @ApiProperty({ description: '학생 이름', example: "홍길동"  })
+    @IsString()
+    student: string;
+  
+    @ApiProperty({ description: '타임스탬프' , example: "2025-05-01T12:37:49.436Z"})
+    @IsString()
+    timeStamp: string;
+  }
+
+export class MusicListResDto {
+    @ApiProperty({type: [MusicDto], description: "방 제목을 정해 방을 새로 생성합니다"})
+    musicList: MusicDto[];
+}
+

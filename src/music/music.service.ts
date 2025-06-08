@@ -12,6 +12,15 @@ constructor(
         private readonly musicSQLService: MusicSQLService
 ) {}
 
+async sendToRoom(roomId: string, data: any) {
+  const channel = `room:${roomId}:channel`;
+  await this.redisService.publish(channel, JSON.stringify(data));
+}
+
+async unsubscribeFromRoom(roomId: string) {
+  const channel = `room:${roomId}:channel`;
+  await this.redisService.unsubscribe(channel);
+}
 
 async makeNewRoom(roomTitle: string) {
     const roomId = uuidv4(); // 고유 ID 생성
@@ -133,7 +142,7 @@ async makeNewRoom(roomTitle: string) {
     return { success: true };
   }
     
-  private async getMusicList(roomId: string) {
+  async getMusicList(roomId: string) {
     const redis = this.redisService.getClient();
     const key = `room:${roomId}:musicList`;
     const raw = await redis.get(key);
