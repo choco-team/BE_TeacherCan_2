@@ -9,7 +9,7 @@ export class SyncTask {
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async handleCron() {
     console.log('[SyncTask] 시작: DB → Redis 동기화');
-    await this.syncService.syncMusicRequestsToRedis();
+    await this.syncService.syncRedisToDatabase();
     console.log('[SyncTask] 완료');
   }
 }

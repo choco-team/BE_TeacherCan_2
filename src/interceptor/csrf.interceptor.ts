@@ -16,13 +16,13 @@ export class CsrfInterceptor implements NestInterceptor {
     // // GET 요청이나 안전한 메소드에 대해서만 새 CSRF 토큰 생성
     // if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
     //   const csrfToken = uuidv4();
-      
-    //   // 쿠키에 토큰 설정 (HttpOnly 설정으로 JavaScript에서 접근 불가)
-    //   response.cookie('X-CSRF-Token', csrfToken, {
-    //     httpOnly: true,
-    //     secure: process.env.LOCAL === 'false',
-    //     sameSite: 'none',
-    //   });
+
+    // 쿠키에 토큰 설정 (HttpOnly 설정으로 JavaScript에서 접근 불가)
+    response.cookie('X-CSRF-Token', csrfToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
       
     //   // 응답 헤더에 토큰 설정 (클라이언트가 읽을 수 있게)
     //   response.header('X-CSRF-Token', csrfToken);
