@@ -16,14 +16,14 @@ export class Music {
   @Column({ type: "int", nullable: true })
   studentId: number;
 
+  @Column({ type: "varchar", nullable: true })
+  studentName: string
+
   @Column({ type: "varchar", length: 255, nullable: true })
   title?: string;
 
   @CreateDateColumn({ type: "timestamp" })
   timeStamp: Date;
-
-  @UpdateDateColumn({ type: 'timestamp' })
-  updatedAt: Date;  
 
   @ManyToOne(() => Student, (student) => student.id, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   student: Student;

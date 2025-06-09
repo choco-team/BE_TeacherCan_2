@@ -156,7 +156,7 @@ async makeNewRoom(roomTitle: string) {
   private async saveMusicList(roomId: string, musicList: any[]) {
     const redis = this.redisService.getClient();
     const key = `room:${roomId}:musicList`;
-    await redis.set(key, JSON.stringify(musicList), 'EX', 60 * 60 * 24 * 7);
+    await redis.set(key, JSON.stringify(musicList), 'EX', 60 * 60);
   }
   
 

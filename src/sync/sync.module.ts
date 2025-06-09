@@ -7,7 +7,7 @@ import { Music } from 'src/db/entities/music.entity';
 import { Room } from 'src/db/entities/room.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Music,Room])],
+    imports: [TypeOrmModule.forFeature([Music, Room])],
     providers: [SyncService, SyncTask, RedisService],
 })
 export class SyncModule {}

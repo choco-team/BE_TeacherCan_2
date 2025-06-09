@@ -18,11 +18,11 @@ export class CsrfInterceptor implements NestInterceptor {
     //   const csrfToken = uuidv4();
 
     // 쿠키에 토큰 설정 (HttpOnly 설정으로 JavaScript에서 접근 불가)
-    response.cookie('X-CSRF-Token', csrfToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-    });
+    // response.cookie('X-CSRF-Token', csrfToken, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: 'none',
+    // });
       
     //   // 응답 헤더에 토큰 설정 (클라이언트가 읽을 수 있게)
     //   response.header('X-CSRF-Token', csrfToken);
