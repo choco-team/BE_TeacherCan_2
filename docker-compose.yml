@@ -1,4 +1,3 @@
-version: '3'
 
 services:
   redis:
@@ -15,7 +14,7 @@ services:
     ports:
       - "3306:3306"
     env_file:
-      - /opt/app-test/.env
+      - .env
     environment:
       MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
       MYSQL_DATABASE: ${DATABASE_NAME}

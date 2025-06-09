@@ -4,14 +4,22 @@ import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express'
+import * as fs from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
 
-
+  const app = await NestFactory.create(AppModule, {
+  });
 
 
 app.use(express.json());
+
+app.enableCors({
+  origin: ['https://localhost:3000', 'https://teachercan.com', 'https://www.teachercan.com'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token'],
+});
 
 
 if (process.env.LOCAL==="true"){
@@ -38,6 +46,6 @@ if (process.env.LOCAL==="true"){
   // ✅ 글로벌 파이프 설정 (DTO 유효성 검사)
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
-  await app.listen(process.env.SERVER_PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 8080);
 }
 bootstrap();

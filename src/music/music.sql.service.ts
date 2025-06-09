@@ -51,7 +51,7 @@ private  async findStudentInRoom(roomId) {
     const decrypted = await Promise.all(
         studentList.map(async (student) => ({
           id: student.id,
-          name: await this.cryptoService.decryptAES(student.encryptedName, student.ivName)
+          name: ''
         }))
       );    
       return decrypted;
