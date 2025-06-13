@@ -7,3 +7,16 @@ export class UserIdResponseDto {
   userId: number;
 }
 
+export class BaseResponse<T> {
+  @ApiProperty({ example: true })
+  success: boolean;
+
+  @ApiProperty()
+  data: T;
+
+  @ApiProperty({ example: '요청이 성공적으로 처리되었습니다.' })
+  message: string;
+
+  @ApiProperty({ example: new Date().toISOString() })
+  timestamp: string;
+}
