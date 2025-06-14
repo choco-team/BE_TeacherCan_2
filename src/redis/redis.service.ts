@@ -1,20 +1,31 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private pubClient: Redis; // publish 및 일반 작업용
   private subClient: Redis; // subscribe 전용
+  private subscribedChannels: Set<string> = new Set(); // 구독 중인 채널 목록
+
+  constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
+      const host = this.configService.get<string>('REDIS_HOST', 'localhost');
+  const port = this.configService.get<number>('REDIS_PORT', 6379);
+
+  console.log('[RedisService] Config REDIS_HOST =', host);
+  console.log('[RedisService] Config REDIS_PORT =', port);
+
+      
     this.pubClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: +(process.env.REDIS_PORT || 6379),
+  host: host,
+  port: port,
     });
 
     this.subClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: +(process.env.REDIS_PORT || 6379),
+  host: host,
+  port: port,
     });
 
     this.pubClient.on('connect', () => {
@@ -49,6 +60,28 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  async listenToChannel(channel: string, callback: (message: string) => void) {
+    if (!this.subscribedChannels.has(channel)) {
+      await this.subClient.subscribe(channel);
+      this.subscribedChannels.add(channel);
+    }
+
+    this.subClient.on('message', (subscribedChannel, message) => {
+      if (subscribedChannel === channel) {
+        callback(message);
+      }
+    });
+  }
+
+  
+  async unsubscribe(channel: string) {
+    if (this.subscribedChannels.has(channel)) {
+      await this.subClient.unsubscribe(channel);
+      this.subscribedChannels.delete(channel);
+    }
+  }
+
+
   // 일반 키-밸류 작업용
   getClient(): Redis {
     return this.pubClient;
@@ -82,6 +115,12 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
+    console.log('[Redis] Cleaning up connections...');
+    for (const channel of this.subscribedChannels) {
+      await this.subClient.unsubscribe(channel);
+    }
+    this.subscribedChannels.clear();
+    
     await this.pubClient.quit();
     await this.subClient.quit();
   }

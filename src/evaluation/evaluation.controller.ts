@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Request, Response } from 'express';
 import { SessionStoreService } from './session-store.service';
 import { SessionStreamService } from './session-stream.service';
+import { RedisPubSubService } from 'src/redis/redisPubSub.service';
 
 @ApiTags('/evaluation')
 @Controller('evaluation')
@@ -13,7 +14,8 @@ export class EvaluationController {
   constructor(
     private readonly evaluationService: EvaluationService,
     private readonly sessionStoreService: SessionStoreService,
-    private readonly sessionStreamService: SessionStreamService
+    private readonly sessionStreamService: SessionStreamService,
+    private readonly redisPubSubService: RedisPubSubService
   ) {}
 
   // ✅ 세션 생성 (public API)
@@ -22,39 +24,12 @@ export class EvaluationController {
     return this.evaluationService.createSession(dto);
   }
 
-  // ✅ SSE 연결 (public API)
-  @Get('sse/:sessionKey')
-  async connectSession(
-    @Param('sessionKey') sessionKey: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
-    console.log('[SSE] 연결 요청됨:', sessionKey);
-
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
-
-    const stream = this.evaluationService.createStream(sessionKey);
-
-    stream.on('data', (data: string) => {
-      res.write(data);
-    });
-
-    req.on('close', () => {
-      console.log('[SSE] 연결 끊김:', sessionKey);
-      this.evaluationService.closeStream(sessionKey);
-      res.end();
-    });
-  }
-
   // ✅ 시험 화면 전달 (protected or open 둘 다 가능)
   @Get('exam/:sessionKey')
   async connectExam(
     @Res() res: Response,
   ) {
-    const filePath = path.join(process.cwd(), 'exam', 'main.html');
+    const filePath = path.join(process.cwd(), 'dist', 'exam', 'main.html');
     res.sendFile(filePath);
   }
 
@@ -62,7 +37,7 @@ export class EvaluationController {
   async getMainJS(
     @Res() res: Response,
   ) {
-    const filePath = path.join(process.cwd(), 'exam', 'main.js');
+    const filePath = path.join(process.cwd(), 'dist', 'exam', 'main.js');
     res.sendFile(filePath);
   }
 
@@ -75,32 +50,53 @@ export class EvaluationController {
   }
 
 
-  @Get('session/stream/:sessionKey')
-@Header('Content-Type', 'text/event-stream')
+@Get('sse/:sessionKey')
+@Header('Content-Type', 'text/event-stream; charset=utf-8')
 @Header('Cache-Control', 'no-cache')
 @Header('Connection', 'keep-alive')
-public stream(@Param('sessionKey') sessionKey: string, @Res() res: Response) {
-  this.sessionStreamService.register(sessionKey, res);
-}
-
-
-  // ✅ 답안 제출 (인증 필요, 전역 CORS 정책 적용)
-  @Post('student/:sessionKey')
-  async submitExam(
-    @Param('sessionKey') sessionKey: string,
-    @Body() body: studentAnswer
-  ) {
-    console.log('답안 제출')
-    return this.evaluationService.examSubmit(sessionKey, body);
-  }
-
-  @Get('exam-session/:sessionKey/:studentId')
-async getStudentAnswer(
+public stream(
   @Param('sessionKey') sessionKey: string,
-  @Param('studentId') studentId: string,
+  @Res() res: Response,
+  @Req() req: Request
 ) {
-  console.log('제출된 답안 송신중')
-return this.sessionStoreService.getStudentAnswerSheet(sessionKey, studentId)
+  console.log('✅ SSE 연결 요청 들어옴:', sessionKey);
+
+  // SSE 등록
+  this.sessionStreamService.register(sessionKey, res);
+
+  // 초기 응답 (최소 한 번은 write 해야 onmessage 작동)
+  res.write(`data: ${JSON.stringify({ sessionKey, connected: true })}\n\n`);
+
+  // 연결 종료 시 정리
+  req.on('close', () => {
+    console.warn(`❌ SSE 연결 끊김: ${sessionKey}`);
+    this.sessionStreamService.unregister(sessionKey); // 등록 해제
+  });
 }
+
+
+@Post('student/:sessionKey')
+async submitExam(
+  @Param('sessionKey') sessionKey: string,
+  @Body() body: studentAnswer
+) {
+  console.log('세션키: ', sessionKey , '답안 :', body);
+  const result = await this.evaluationService.examSubmit(sessionKey, body);
+  console.log('데이터 :', result)
+
+  // ✅ 직접 send 대신 Redis publish
+  await this.redisPubSubService.publish(`stream:${sessionKey}`, result);
+
+  return result;
+}
+
+  @Get('/:sessionKey/:student')
+async fetchExamData(
+  @Param(`sessionKey`) sessionKey: string,
+  @Param(`student`) student: number
+){
+  return await this.sessionStoreService.fetchExamData(sessionKey, student);
+}
+
 
 }
