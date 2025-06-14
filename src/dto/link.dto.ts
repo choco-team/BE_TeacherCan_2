@@ -7,7 +7,6 @@ export class CreateLinkCodeDto {
     linkCode: string;
 }
 
-
 export class CreateLinkDto {
     @ApiProperty({example: "jsm000", description: "링크코드"})
     @IsString()
@@ -24,7 +23,7 @@ export class CreateLinkDto {
     description: string;
 }
 
-export class CreateLinkResDto {
+export class CreatedResDto {
   @ApiProperty({ example: 'uuid-1234-abcd' })
   id: string;
 }

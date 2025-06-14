@@ -29,9 +29,9 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
         if (hasWrappedShape) {
           return {
             success: true,
+            statusCode: raw.statusCode ?? defaultStatus,
             data: raw.data,
             message: raw.message,
-            statusCode: raw.statusCode ?? defaultStatus,
             timestamp: new Date().toISOString(),
           };
         }
@@ -39,9 +39,9 @@ export class TransformInterceptor<T> implements NestInterceptor<T, any> {
         // 기본 구조
         return {
           success: true,
+          statusCode: defaultStatus,
           data: raw,
           message: '요청이 성공적으로 처리되었습니다.',
-          statusCode: defaultStatus,
           timestamp: new Date().toISOString(),
         };
       }),
