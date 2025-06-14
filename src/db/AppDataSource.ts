@@ -23,5 +23,4 @@ export const AppDataSource = new DataSource({
   extra: {
     authPlugins: 'caching_sha2_password'
   },
-  synchronize: true
 });

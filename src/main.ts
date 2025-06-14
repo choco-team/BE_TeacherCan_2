@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express'
 import * as fs from 'fs';
+import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 
 async function bootstrap() {
 
@@ -39,12 +40,13 @@ if (process.env.LOCAL==="true"){
     });
 }
 
-
-
   // ✅ 쿠키 파서를 전역 미들웨어로 추가
   app.use(cookieParser());
   // ✅ 글로벌 파이프 설정 (DTO 유효성 검사)
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  // 에러 형식 통일
+  app.useGlobalFilters(new HttpExceptionFilter());
+
 
   await app.listen(process.env.PORT ?? 8080);
 }
