@@ -35,7 +35,7 @@ async makeNewRoom(roomTitle: string) {
 
     const redis = this.redisService.getClient();
     await redis.set(roomKey, JSON.stringify(roomData));
-    await redis.set(roomKey, JSON.stringify(roomData), 'EX', 60 * 60 * 24 * 7); // TTL: 7일
+    await redis.set(roomKey, JSON.stringify(roomData), 'EX', 7200); // TTL: 7일
 
     return { roomId };
   }
@@ -217,15 +217,15 @@ async makeNewRoom(roomTitle: string) {
     }));
     
   
-    await redis.set(roomKey, JSON.stringify(roomPayload), 'EX', 60 * 60 * 24 * 7);
+    await redis.set(roomKey, JSON.stringify(roomPayload), 'EX', 7200);
   
     // 학생 리스트 저장
     const studentKey = `room:${id}:students`;
-    await redis.set(studentKey, JSON.stringify(normalizedStudentList), 'EX', 60 * 60 * 24 * 7);
+    await redis.set(studentKey, JSON.stringify(normalizedStudentList), 'EX', 7200);
 
     // 음악 리스트 저장
     const musicKey = `room:${id}:musicList`;
-    await redis.set(musicKey, JSON.stringify(normalizedMusicList), 'EX', 60 * 60 * 24 * 7);
+    await redis.set(musicKey, JSON.stringify(normalizedMusicList), 'EX', 7200);
   }
   
   }
