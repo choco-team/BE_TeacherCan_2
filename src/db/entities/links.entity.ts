@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, JoinColumn } from "typeorm";
 import { LinkCode } from "./linkCode.entity";
 
 @Entity("links")
@@ -13,11 +13,14 @@ export class Links {
   description: string;
   
   @CreateDateColumn({ type: "timestamp" })
-  timeStamp: Date;
+  createdAt: Date;
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
   
-  @ManyToOne(() => LinkCode, (LinkCode) => LinkCode.linkCode, { onDelete: "CASCADE", onUpdate: "CASCADE"})
+  @ManyToOne(() => LinkCode, (linkCode) => linkCode.links, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'linkCode' }) 
   linkCode: LinkCode;
 }

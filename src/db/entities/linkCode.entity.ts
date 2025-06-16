@@ -1,13 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn } from "typeorm";
+import { Entity, UpdateDateColumn, PrimaryColumn, OneToMany } from "typeorm";
+import { Links } from "./links.entity";
 
 @Entity("link_code")
 export class LinkCode {
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
-
-  @Column({ unique:true, type: "varchar", length: 255 })
-  linkCode: string;
+  @PrimaryColumn({ type: 'varchar', length: 255 })
+  code: string;
 
   @UpdateDateColumn({ type: 'timestamp' })
-  connectedAt: Date;
+  createdAt: Date;
+
+  @OneToMany(() => Links, (links) => links.linkCode)
+  links: Links[];
 }
