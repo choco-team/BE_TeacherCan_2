@@ -1,127 +1,84 @@
+// 1. RedisService: 기본 Redis 연결 관리 + 일반 작업
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private pubClient: Redis; // publish 및 일반 작업용
-  private subClient: Redis; // subscribe 전용
-  private subscribedChannels: Set<string> = new Set(); // 구독 중인 채널 목록
+  private client: Redis;
 
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
-      const host = this.configService.get<string>('REDIS_HOST', 'localhost');
-  const port = this.configService.get<number>('REDIS_PORT', 6379);
+    const host = this.configService.get<string>('REDIS_HOST', 'localhost');
+    const port = this.configService.get<number>('REDIS_PORT', 6379);
 
-  console.log('[RedisService] Config REDIS_HOST =', host);
-  console.log('[RedisService] Config REDIS_PORT =', port);
+    console.log('[RedisService] Config REDIS_HOST =', host);
+    console.log('[RedisService] Config REDIS_PORT =', port);
 
-      
-    this.pubClient = new Redis({
-  host: host,
-  port: port,
+    this.client = new Redis({ host, port });
+
+    this.client.on('connect', () => {
+      console.log('[Redis] Client Connected');
     });
 
-    this.subClient = new Redis({
-  host: host,
-  port: port,
-    });
-
-    this.pubClient.on('connect', () => {
-      console.log('[Redis] Pub Client Connected');
-    });
-
-    this.subClient.on('connect', () => {
-      console.log('[Redis] Sub Client Connected');
-    });
-
-    this.pubClient.on('error', (err) => {
-      console.error('[Redis] Pub Error:', err);
-    });
-
-    this.subClient.on('error', (err) => {
-      console.error('[Redis] Sub Error:', err);
+    this.client.on('error', (err) => {
+      console.error('[Redis] Error:', err);
     });
   }
 
-  // publish
-  async publish(channel: string, message: string) {
-    await this.pubClient.publish(channel, message);
-  }
-
-  // subscribe
-  async subscribe(channel: string, listener: (message: string) => void) {
-    await this.subClient.subscribe(channel);
-    this.subClient.on('message', (subscribedChannel, message) => {
-      if (subscribedChannel === channel) {
-        listener(message);
-      }
-    });
-  }
-
-  async listenToChannel(channel: string, callback: (message: string) => void) {
-    if (!this.subscribedChannels.has(channel)) {
-      await this.subClient.subscribe(channel);
-      this.subscribedChannels.add(channel);
-    }
-
-    this.subClient.on('message', (subscribedChannel, message) => {
-      if (subscribedChannel === channel) {
-        callback(message);
-      }
-    });
-  }
-
-  
-  async unsubscribe(channel: string) {
-    if (this.subscribedChannels.has(channel)) {
-      await this.subClient.unsubscribe(channel);
-      this.subscribedChannels.delete(channel);
-    }
-  }
-
-
-  // 일반 키-밸류 작업용
+  // 클라이언트 접근 (다른 서비스에서 사용)
   getClient(): Redis {
-    return this.pubClient;
+    return this.client;
   }
 
-  /**
-   * HSET 메서드 추가 (music_request용)
-   * @param key Redis 키
-   * @param values 저장할 필드-값 오브젝트
-   */
-  async hset(key: string, values: Record<string, string>) {
-    if (!this.pubClient.status || this.pubClient.status !== 'ready') {
-      console.warn('[Redis] pubClient not ready, reconnecting...');
-      await this.pubClient.connect();
+  // 일반 Redis 작업들
+  async set(key: string, value: string, ttl?: number): Promise<void> {
+    if (ttl) {
+      await this.client.setex(key, ttl, value);
+    } else {
+      await this.client.set(key, value);
+    }
+  }
+
+  async get(key: string): Promise<string | null> {
+    return await this.client.get(key);
+  }
+
+  async hset(key: string, values: Record<string, string>): Promise<void> {
+    if (!this.client.status || this.client.status !== 'ready') {
+      console.warn('[Redis] Client not ready, reconnecting...');
+      await this.client.connect();
     }
 
     const entries = Object.entries(values).flat();
     if (entries.length === 0) return;
 
-    await this.pubClient.hset(key, ...entries);
+    await this.client.hset(key, ...entries);
   }
 
-  /**
-   * (Optional) 키 삭제
-   */
-  async delete(key: string) {
-    if (!this.pubClient.status || this.pubClient.status !== 'ready') {
-      await this.pubClient.connect();
+  async hget(key: string, field: string): Promise<string | null> {
+    return await this.client.hget(key, field);
+  }
+
+  async hgetall(key: string): Promise<Record<string, string>> {
+    return await this.client.hgetall(key);
+  }
+
+  async delete(key: string): Promise<void> {
+    if (!this.client.status || this.client.status !== 'ready') {
+      await this.client.connect();
     }
-    await this.pubClient.del(key);
+    await this.client.del(key);
+  }
+
+  async exists(key: string): Promise<boolean> {
+    const result = await this.client.exists(key);
+    return result === 1;
   }
 
   async onModuleDestroy() {
-    console.log('[Redis] Cleaning up connections...');
-    for (const channel of this.subscribedChannels) {
-      await this.subClient.unsubscribe(channel);
-    }
-    this.subscribedChannels.clear();
-    
-    await this.pubClient.quit();
-    await this.subClient.quit();
+    console.log('[Redis] Cleaning up connection...');
+    await this.client.quit();
   }
 }

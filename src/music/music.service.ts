@@ -3,23 +3,26 @@ import { RedisService } from 'src/redis/redis.service';
 import { CryptoService } from 'src/services/crypto.service';
 import { v4 as uuidv4} from 'uuid'
 import { MusicSQLService } from './music.sql.service';
+import { RedisPubSubService } from 'src/redis/redisPubSub.service';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class MusicService {
 constructor(
         private readonly redisService: RedisService,
+        private readonly redisPubSubService: RedisPubSubService,
         private readonly cryptoService: CryptoService,
         private readonly musicSQLService: MusicSQLService
 ) {}
 
 async sendToRoom(roomId: string, data: any) {
   const channel = `room:${roomId}:channel`;
-  await this.redisService.publish(channel, JSON.stringify(data));
+  await this.redisPubSubService.publish(channel, JSON.stringify(data));
 }
 
 async unsubscribeFromRoom(roomId: string) {
   const channel = `room:${roomId}:channel`;
-  await this.redisService.unsubscribe(channel);
+  await this.redisPubSubService.unsubscribe(channel);
 }
 
 async makeNewRoom(roomTitle: string) {
@@ -34,7 +37,6 @@ async makeNewRoom(roomTitle: string) {
     };
 
     const redis = this.redisService.getClient();
-    await redis.set(roomKey, JSON.stringify(roomData));
     await redis.set(roomKey, JSON.stringify(roomData), 'EX', 7200); // TTL: 7일
 
     return { roomId };
@@ -146,9 +148,15 @@ async makeNewRoom(roomTitle: string) {
     const redis = this.redisService.getClient();
     const key = `room:${roomId}:musicList`;
     const raw = await redis.get(key);
-    return raw ? JSON.parse(raw) : [];
-  }
   
+    if (raw) return JSON.parse(raw);
+  
+    // room 키가 살아 있고 musicList는 TTL 만료된 상황 대응
+    const roomData = await this.musicSQLService.getRoomInfomation(roomId);
+    await this.saveToRedis({ id: roomId, ...roomData });
+    return roomData.musicList;
+  }
+    
   private isDuplicateMusic(musicList: any[], musicId: string): boolean {
     return musicList.some((music) => music.musicId === musicId);
   }
@@ -157,8 +165,11 @@ async makeNewRoom(roomTitle: string) {
     const redis = this.redisService.getClient();
     const key = `room:${roomId}:musicList`;
     await redis.set(key, JSON.stringify(musicList), 'EX', 7200);
-  }
   
+    // 👇 같이 갱신
+    await redis.expire(`room:${roomId}`, 7200);
+  }
+    
 
 
   async removeMusicInRoom(roomId: string, musicId: string) {
@@ -228,6 +239,45 @@ async makeNewRoom(roomTitle: string) {
     await redis.set(musicKey, JSON.stringify(normalizedMusicList), 'EX', 7200);
   }
   
+
+    // SSE 스트림 생성 로직을 서비스로 이동
+    createMusicListStream(roomId: string): Observable<any> {
+      const channel = `room:${roomId}:channel`;
+      
+      return new Observable((observer) => {
+        // 초기 데이터 전송
+        this.getMusicList(roomId).then(initialData => {
+          observer.next({
+            event: 'music-list',
+            data: { musicList: initialData },
+          });
+        });
+  
+        // Redis 구독 설정
+        const listener = (message: string) => {
+          try {
+            observer.next({
+              event: 'music-list',
+              data: JSON.parse(message),
+            });
+          } catch (err) {
+            console.error('SSE 메시지 파싱 실패:', err);
+            observer.error(err);
+          }
+        };
+  
+        this.redisPubSubService.subscribeRaw(channel, listener);
+  
+        // 정리 함수
+        return () => {
+          console.log(`[SSE] Cleaning up subscription for room ${roomId}`);
+          this.redisPubSubService.unsubscribe(channel);
+        };
+      });
+    }
+  
+
+
   }
 
   
