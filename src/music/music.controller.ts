@@ -4,46 +4,28 @@ import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto, Stude
 import { MusicService } from './music.service';
 import { Observable } from 'rxjs';
 import { RedisService } from 'src/redis/redis.service';
+import { RedisPubSubService } from 'src/redis/redisPubSub.service';
 @ApiTags('/music-request')
 @Controller('/music-request')
 export class MusicController {
       constructor(
         private readonly musicService: MusicService,
         private readonly redisService: RedisService,
+        private readonly redisPubSubService: RedisPubSubService
     ) {}
-            @Sse('/sse')
-            async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request) {
-                const channel = `room:${roomId}:channel`;
-                const initialData = await this.musicService.getMusicList(roomId);
-
-                return new Observable((observer) => {
-                    observer.next({
-                    event: 'music-list',
-                    data: { musicList: initialData },
-                    });
-
-                    const listener = (message: string) => {
-                        try {
-                            observer.next({
-                            event: 'music-list',
-                            data: JSON.parse(message),
-                            });
-                        } catch (err) {
-                            console.error('SSE 메시지 파싱 실패:', err);
-                        }
-                        };
-                    this.redisService.listenToChannel(channel, listener);
-                    
-                    const res = (req as any).res;
-                    res.on('close', async () => {
-                    console.log(`[SSE] Client disconnected from room ${roomId}`);
-                    await this.redisService.unsubscribe(channel);
-                    observer.complete();
-                    });
-
-                });
-                }
-
+    @Sse('/sse')
+    streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Observable<any> {
+      const stream = this.musicService.createMusicListStream(roomId);
+      
+      // 클라이언트 연결 해제 처리
+      const res = (req as any).res;
+      res.on('close', () => {
+        console.log(`[SSE] Client disconnected from room ${roomId}`);
+      });
+  
+      return stream;
+    }
+  
             @Post('/room')
             @ApiOperation({summary: '방 생성', description: '음악 추천을 위한 방을 생성합니다'})
             @ApiBody({type: RoomTitleDto})
