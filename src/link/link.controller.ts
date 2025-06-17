@@ -19,9 +19,12 @@ export class LinkController {
     @Post('/code')
     @ApiOperation({summary: '링크코드 생성', description: '새 링크코드를 생성합니다.'})
     @ApiBody({type: CreateLinkCodeDto})
-    @SwaggerSuccess(CreatedResDto)
+    @SwaggerSuccess(CreatedResDto, '링크코드가 성공적으로 생성되었습니다.')
     async makeNewLinkCode(@Body() dto: CreateLinkCodeDto){
-        return { id: await this.linkSQLService.createNewLinkCode(dto) }
+        return { 
+            data: {id: await this.linkSQLService.createNewLinkCode(dto) },
+            message: '링크코드가 성공적으로 생성되었습니다.',
+        }
     }
 
     @Post('')

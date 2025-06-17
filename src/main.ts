@@ -4,7 +4,6 @@ import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express'
-import * as fs from 'fs';
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 
 async function bootstrap() {

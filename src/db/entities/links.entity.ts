@@ -1,7 +1,8 @@
-import { Entity, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, JoinColumn } from "typeorm";
+import { Entity, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, PrimaryGeneratedColumn, JoinColumn, Unique } from "typeorm";
 import { LinkCode } from "./linkCode.entity";
 
 @Entity("links")
+@Unique(['link', 'linkCode'])
 export class Links {
   @PrimaryGeneratedColumn("increment")
   id: number;

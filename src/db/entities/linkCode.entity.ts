@@ -3,6 +3,10 @@ import { Links } from "./links.entity";
 
 @Entity("link_code")
 export class LinkCode {
+  constructor(code?: string) {
+    this.code = code;
+  }
+
   @PrimaryColumn({ type: 'varchar', length: 255 })
   code: string;
 
