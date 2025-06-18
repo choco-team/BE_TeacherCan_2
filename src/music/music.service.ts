@@ -26,21 +26,21 @@ async unsubscribeFromRoom(roomId: string) {
 }
 
 async makeNewRoom(roomTitle: string) {
-    const roomId = uuidv4(); // 고유 ID 생성
-    const roomKey = `room:${roomId}`;
+  const roomId = uuidv4();
+  const redis = this.redisService.getClient();
 
-    const now = new Date().toISOString();
-    const roomData = {
-      id: roomId,
-      roomTitle,
-      connectedAt: now,
-    };
+  const now = new Date().toISOString();
+  const roomPayload = { id: roomId, roomTitle, connectedAt: now };
 
-    const redis = this.redisService.getClient();
-    await redis.set(roomKey, JSON.stringify(roomData), 'EX', 7200); // TTL: 7일
+  await Promise.all([
+    redis.set(`room:${roomId}`, JSON.stringify(roomPayload), 'EX', 7200),
+    redis.set(`room:${roomId}:musicList`, JSON.stringify([]), 'EX', 7200),
+    redis.set(`room:${roomId}:students`,  JSON.stringify([]), 'EX', 7200),
+  ]);
 
-    return { roomId };
-  }
+  return { roomId };
+}
+
 
   async getRoomTitle(roomId: string): Promise<{ roomTitle: string }> {
     const redis = this.redisService.getClient();
@@ -118,13 +118,13 @@ async makeNewRoom(roomTitle: string) {
   
   async addMusicInRoom(roomId: string, musicId: string, title: string, studentName: string) {
   
-    const musicList = await this.getMusicList(roomId);
 
     const room = await this.getRoomData(roomId).catch(() => null);
     if (!room){
       const roomData = await this.musicSQLService.getRoomInfomation(roomId)
       await this.saveToRedis({ id: roomId, ...roomData });
   }
+  const musicList = await this.getMusicList(roomId);
 
     if (this.isDuplicateMusic(musicList, musicId)) {
       throw new HttpException('이미 신청한 곡입니다', HttpStatus.CONFLICT);

@@ -5,11 +5,23 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express'
 import * as fs from 'fs';
+import * as https from 'https';
 
 async function bootstrap() {
+  const httpsOptions = {
+    key: fs.readFileSync('./localhost-key.pem'),
+    cert: fs.readFileSync('./localhost.pem'),
+  };
 
-  const app = await NestFactory.create(AppModule, {
-  });
+  let app
+  if (process.env.LOCAL_HTTPS==="true") {
+     app = await NestFactory.create(AppModule, {
+      httpsOptions
+    });  
+  } else {
+    app = await NestFactory.create(AppModule, {
+    });
+  }
 
 
 app.use(express.json());
