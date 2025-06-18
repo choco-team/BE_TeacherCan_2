@@ -1,8 +1,8 @@
-import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LinkCode } from 'src/db/entities/linkCode.entity';
 import { Links } from 'src/db/entities/links.entity';
-import { CreateLinkCodeDto, CreateLinkDto, GetLinkDto } from 'src/dto/link.dto';
+import { CreateLinkDto, LinkCodeDto, LinkIdDto } from 'src/dto/link.dto';
 import { Repository, DataSource } from 'typeorm';
 
 @Injectable()
@@ -15,19 +15,15 @@ constructor(
         private readonly dataSource: DataSource
 ) {}
 
-
-
-  async createNewLinkCode(dto: CreateLinkCodeDto) {
+  async createNewLinkCode(dto: LinkCodeDto) {
     const code = dto.code
 
     return await this.dataSource.transaction(async (manager) => {
       const newLinkCode = manager.create(LinkCode, { code });
-
       try {
-        const saved = await manager.save(LinkCode, newLinkCode);
-        return saved.code;
+        return (await manager.insert(LinkCode, newLinkCode)).identifiers[0].code;
       } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY' || err.code === 'SQLITE_CONSTRAINT') {
+        if (err.code === 'ER_DUP_ENTRY' || err.errno === 1062) {
           throw new ConflictException('이미 존재하는 링크코드입니다.');
         }
         throw err;
@@ -58,7 +54,7 @@ constructor(
     });
   }
 
-  async getLinks(dto: GetLinkDto) {
+  async getLinks(dto: LinkCodeDto) {
     const { code } = dto;
 
     const links = await this.linksRepository
@@ -74,6 +70,24 @@ constructor(
       return [] // 링크코드가 문제 없을 경우 빈 배열이 맞으므로 [] 전달
     }
     return links;
+  }
+
+  async deleteLink(dto: LinkIdDto) {
+    const {id} = dto
+    const result = await this.linksRepository.delete(id);
+
+    if (result.affected === 0) {
+      throw new NotFoundException('삭제할 링크가 존재하지 않습니다.');
+    }
+  }
+
+  async deleteLinkCode(dto: LinkCodeDto) {
+    const {code} = dto
+    const result = await this.linkCodeRepository.delete(code);
+
+    if (result.affected === 0) {
+      throw new NotFoundException('삭제할 링크코드가 존재하지 않습니다.');
+    }
   }
 }
 

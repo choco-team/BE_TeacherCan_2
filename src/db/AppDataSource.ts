@@ -22,5 +22,5 @@ export const AppDataSource = new DataSource({
   logging: process.env.LOCAL === 'true', // 개발 환경에서만 로그 활성화
   extra: {
     authPlugins: 'caching_sha2_password'
-  },
+  }
 });
