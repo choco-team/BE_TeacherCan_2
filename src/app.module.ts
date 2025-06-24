@@ -12,8 +12,8 @@ import { CsrfInterceptor } from './interceptor/csrf.interceptor';
 import { CsrfMiddleware } from './middleware/csrf.middleware';
 import { RedisModule } from './redis/redis.module';
 import { EvaluationModule } from './evaluation/evaluation.module';
-import { ScheduleModule } from '@nestjs/schedule';
-import { SyncModule } from './sync/sync.module';
+
+
 
 @Module({
   imports: [
@@ -25,8 +25,7 @@ import { SyncModule } from './sync/sync.module';
     MusicModule,
     RedisModule,
     EvaluationModule,
-    ScheduleModule.forRoot(),
-    SyncModule
+
   ],
   providers: [
     {
