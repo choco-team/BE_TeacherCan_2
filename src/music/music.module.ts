@@ -10,8 +10,12 @@ import { MusicSQLService } from './music.sql.service';
 import { MusicService } from './music.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Student, Music, Room, RsaKey]), CryptoModule],
+  imports: [
+    TypeOrmModule.forFeature([Student, Music, Room, RsaKey]), 
+    CryptoModule
+  ],
   providers: [MusicSQLService, MusicService],
-  controllers: [MusicController]
+  controllers: [MusicController],
+  exports: [MusicService, MusicSQLService] // 다른 모듈에서 사용할 수 있도록 export
 })
 export class MusicModule {}
