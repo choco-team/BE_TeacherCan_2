@@ -9,11 +9,15 @@
 - **인증**: 카카오 OAuth + JWT + 세션
 - **포트**: 8080
 - **배포**: Docker + Google Cloud Run
+- **프록시**: Nginx
 
 ## 🏗️ 전체 디렉토리 구조
 
 ```
 BE_TeacherCan_2/
+├── .github/                    # GitHub Actions 및 워크플로우
+│   ├── workflows/             # CI/CD 워크플로우
+│   └── pull_request_template.md
 ├── src/                        # 소스 코드
 │   ├── main.ts                 # 애플리케이션 진입점
 │   ├── app.module.ts           # 루트 모듈
@@ -59,17 +63,23 @@ BE_TeacherCan_2/
 │   ├── services/               # 공통 서비스
 │   │   ├── crypto.service.ts
 │   │   └── crypto.module.ts
-│   ├── sync/                   # 동기화 관련 모듈
 │   ├── decorator/              # 커스텀 데코레이터
 │   ├── interceptor/            # 인터셉터 (CSRF 등)
 │   └── middleware/             # 미들웨어
+├── nginx/                      # Nginx 설정 파일들
+│   ├── default.conf           # 기본 Nginx 설정
+│   ├── default-http.conf      # HTTP 설정
+│   ├── default-ssl.conf       # SSL 설정
+│   └── start.sh               # Nginx 시작 스크립트
 ├── docs/                       # 문서 디렉토리
 ├── exam/                       # 시험 관련 정적 파일
 ├── ssl/                        # SSL 인증서
+├── deprecated/                 # 더 이상 사용하지 않는 파일들
 ├── dist/                       # 빌드 결과물
 ├── test/                       # 테스트 파일
 ├── docker-compose.yml          # Docker Compose 설정
 ├── Dockerfile                  # Docker 이미지 빌드
+├── cloudbuild.yaml            # Google Cloud Build 설정
 └── 기타 설정 파일들
 ```
 
@@ -81,27 +91,27 @@ BE_TeacherCan_2/
 - **Express**: 기본 HTTP 서버
 
 ### 데이터베이스 & ORM
-- **MySQL**: 주 데이터베이스 (mysql2 드라이버)
-- **TypeORM**: ORM 라이브러리
-- **Redis**: 캐시 및 세션 저장소 (ioredis)
+- **MySQL**: 주 데이터베이스 (mysql2 3.12.0)
+- **TypeORM**: ORM 라이브러리 (@nestjs/typeorm 11.0.0)
+- **Redis**: 캐시 및 세션 저장소 (ioredis 5.6.1)
 
 ### 인증 & 보안
 - **Passport.js**: 인증 프레임워크
-- **카카오 OAuth**: 소셜 로그인
-- **JWT**: 토큰 기반 인증 (jsonwebtoken)
-- **Express Session**: 세션 관리
+- **카카오 OAuth**: 소셜 로그인 (passport-kakao)
+- **JWT**: 토큰 기반 인증 (jsonwebtoken 9.0.2)
+- **Express Session**: 세션 관리 (express-session 1.18.1)
 - **CSRF Protection**: CSRF 공격 방지
-- **Cookie Parser**: 쿠키 처리
+- **Cookie Parser**: 쿠키 처리 (cookie-parser 1.4.7)
 
 ### API & 문서화
-- **Swagger**: API 문서 자동 생성
-- **Class Validator**: DTO 유효성 검사
-- **Class Transformer**: 데이터 변환
+- **Swagger**: API 문서 자동 생성 (@nestjs/swagger 7.4.2)
+- **Class Validator**: DTO 유효성 검사 (class-validator 0.14.1)
+- **Class Transformer**: 데이터 변환 (class-transformer 0.5.1)
 
 ### 기타 라이브러리
-- **Axios**: HTTP 클라이언트
-- **tiktoken**: AI 토큰 처리
-- **Cron Scheduling**: 작업 스케줄링
+- **Axios**: HTTP 클라이언트 (axios 1.8.0)
+- **tiktoken**: AI 토큰 처리 (tiktoken 1.0.20)
+- **Cron Scheduling**: 작업 스케줄링 (@nestjs/schedule 6.0.0)
 
 ## 📁 핵심 모듈 상세 분석
 
@@ -227,13 +237,24 @@ dto/
 - **docker-compose.yml**: 로컬 개발 환경
 - **의존성**: MySQL, Redis 컨테이너
 
+### Nginx 프록시
+- **nginx/**: Nginx 설정 파일 디렉토리
+- **default.conf**: 기본 설정
+- **default-http.conf**: HTTP 전용 설정
+- **default-ssl.conf**: HTTPS/SSL 설정
+- **start.sh**: Nginx 시작 스크립트
+
 ### 클라우드 배포
 - **Google Cloud Build**: 자동 빌드 및 배포
 - **cloudbuild.yaml**: 빌드 파이프라인 정의
-- **Nginx**: 리버스 프록시 설정
+- **Google Cloud Run**: 컨테이너 기반 서버리스 배포
+
+### CI/CD
+- **.github/workflows/**: GitHub Actions 워크플로우
+- **pull_request_template.md**: PR 템플릿
 
 ### SSL/HTTPS
-- **로컬 개발**: 자체 서명 인증서
+- **로컬 개발**: 자체 서명 인증서 (localhost.pem, localhost-key.pem)
 - **프로덕션**: 도메인 인증서 (teachercan.com)
 
 ## 🔧 개발 환경 설정
@@ -253,9 +274,11 @@ PORT=8080                    # 서버 포트
 ### 개발 명령어
 ```bash
 npm run start:dev            # 개발 서버 시작
-npm run build               # 프로덕션 빌드
+npm run build               # 프로덕션 빌드 (exam 파일 복사 포함)
 npm run test                # 테스트 실행
+npm run test:e2e            # E2E 테스트 실행
 npm run lint                # 코드 린팅
+npm run format              # 코드 포맷팅
 ```
 
 ## 📊 주요 기능 추정
@@ -273,16 +296,28 @@ npm run lint                # 코드 린팅
 - **높은 보안성**: 다중 보안 레이어
 - **실시간 처리**: 스트림 기반 세션
 - **클라우드 네이티브**: 컨테이너 기반 배포
+- **프록시 지원**: Nginx를 통한 요청 처리
 
 ## 🔄 데이터 흐름
 
 1. **사용자 로그인** → 카카오 OAuth → JWT 토큰 발급
-2. **API 요청** → 인증 가드 → 권한 검증 → 비즈니스 로직
+2. **API 요청** → Nginx 프록시 → 인증 가드 → 권한 검증 → 비즈니스 로직
 3. **평가 요청** → AI 처리 → 결과 저장 → 실시간 응답
 4. **세션 관리** → Redis 캐시 → 데이터베이스 동기화
 
+## 📋 변경 이력
+
+### 2025-06-25 업데이트
+- **.github/** 디렉토리 추가 (GitHub Actions 워크플로우)
+- **nginx/** 디렉토리 추가 (Nginx 설정 파일들)
+- **deprecated/** 디렉토리 추가 (더 이상 사용하지 않는 파일들)
+- **src/sync/** 디렉토리 제거 (실제 존재하지 않음)
+- 의존성 버전 정보 업데이트
+- Nginx 프록시 설정 관련 내용 추가
+
 ---
 
-**작성일**: 2025-06-24  
-**버전**: 1.0  
-**작성자**: AI Assistant
+**작성일**: 2025-06-25  
+**버전**: 1.1  
+**작성자**: AI Assistant  
+**마지막 업데이트**: 실제 프로젝트 구조와 동기화
