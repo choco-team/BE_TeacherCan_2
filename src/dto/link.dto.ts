@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LinkDto {
+    @ApiProperty({ example: '12', description: "링크 id" })
+    id: string;
+
     @ApiProperty({example: "www.naver.com", description: "링크"})
     link: string;
 
@@ -8,8 +11,13 @@ export class LinkDto {
     description: string;
 }
 
+export class LinksDto {
+    @ApiProperty({description: "링크코드", type:LinkDto, isArray:true })
+    links: LinkDto[]
+}
+
 export class LinkIdDto {
-    @ApiProperty({ example: 'uuid-1234-abcd', description: "링크 id" })
+    @ApiProperty({ example: '12', description: "링크 id" })
     id: string;
 }
 
@@ -29,7 +37,3 @@ export class CreateLinkDto {
     description: string;
 }
 
-export class GetLinkResDto {
-    @ApiProperty({description: "링크코드", type:LinkDto, isArray:true })
-    links: LinkDto[]
-}

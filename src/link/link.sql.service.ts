@@ -15,7 +15,7 @@ constructor(
         private readonly dataSource: DataSource
 ) {}
 
-  async createNewLinkCode(dto: LinkCodeDto) {
+  async createLinkCode(dto: LinkCodeDto) {
     const code = dto.code
 
     return await this.dataSource.transaction(async (manager) => {
@@ -31,7 +31,7 @@ constructor(
     });
   }
 
-  async createNewLink(dto: CreateLinkDto) {
+  async createLink(dto: CreateLinkDto) {
     const { description, link, code} = dto
 
     return await this.dataSource.transaction(async manager => {
@@ -39,12 +39,15 @@ constructor(
       if (!exists) throw new BadRequestException('유효하지 않은 링크 코드입니다.');
 
       const linkCodeEntity = new LinkCode(code);
-      linkCodeEntity.code = code;
 
       const newLink = manager.create(Links, { link, description, linkCode: linkCodeEntity});
       try {
-        const saved = await manager.save(Links, newLink);
-        return { id: saved.id };
+        const savedLink = await manager.save(Links, newLink);
+        return {
+          id: savedLink.id,
+          link: savedLink.link,
+          description: savedLink.description
+        };
       } catch (err) {
         if (err.code === 'ER_DUP_ENTRY' || err.code === 'SQLITE_CONSTRAINT') {
           throw new BadRequestException('이미 동일한 링크가 등록되어 있습니다.');
@@ -64,7 +67,7 @@ constructor(
       .select(['links.id', 'links.link', 'links.description'])
       .getMany();
 
-    if (links.length === 0) { // 링크가 존재하지 않을경우 linkCode가 유효한지 검사 (매번 검사)
+    if (links.length === 0) { // 링크가 존재하지 않을경우 linkCode가 유효한지 검사 (매번 검사 방지)
       const exists = await this.linkCodeRepository.exists({ where: { code } });
       if (!exists) throw new BadRequestException('유효하지 않은 링크 코드입니다.');
       return [] // 링크코드가 문제 없을 경우 빈 배열이 맞으므로 [] 전달

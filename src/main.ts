@@ -15,7 +15,7 @@ async function bootstrap() {
 app.use(express.json());
 
 app.enableCors({
-  origin: ['https://localhost:3000', 'https://teachercan.com', 'https://www.teachercan.com'],
+  origin: ['https://localhost:3000', 'https://teachercan.com', 'https://www.teachercan.com', 'http://localhost:3000'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token'],
