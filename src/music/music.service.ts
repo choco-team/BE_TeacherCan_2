@@ -20,6 +20,7 @@ export class MusicService {
         const listenerCount = this.eventEmitter.listenerCount(channel);
         console.log(`[SSE] emit to ${channel} | 리스너 수: ${listenerCount}`);
         this.eventEmitter.emit(channel, JSON.stringify(data));
+        console.log(`[SSE] Sending event to room ${roomId}`, data);
     }
 
     async unsubscribeFromRoom(roomId: string) {
@@ -155,10 +156,19 @@ export class MusicService {
                     observer.error(err);
                 }
             };
-
+            
+            console.log(`[SSE] Setting up listener for room ${roomId}`);
             this.eventEmitter.on(channel, listener);
             console.log(`[SSE] Listener 등록됨: ${channel}`);
 
+
+            // ping 
+            const pingInterval = setInterval(() => {
+            observer.next({
+                type: 'ping',
+                data: { timestamp: new Date().toISOString() },
+            });
+            }, 15000); // 15초마다 ping
 
             // ping 
             const pingInterval = setInterval(() => {
