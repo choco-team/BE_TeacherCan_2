@@ -4,28 +4,23 @@ import { v4 as uuidv4} from 'uuid'
 import { MusicSQLService } from './music.sql.service';
 import { Observable } from 'rxjs';
 import { EventEmitter } from 'events';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class MusicService {
-    private eventEmitter = new EventEmitter(); // Redis PubSub 대신 EventEmitter 사용
 
     constructor(
         private readonly cryptoService: CryptoService,
-        private readonly musicSQLService: MusicSQLService
+        private readonly musicSQLService: MusicSQLService,
+        private readonly redisService: RedisService,
     ) {}
 
-    // Redis PubSub 대신 EventEmitter 사용
     async sendToRoom(roomId: string, data: any) {
-        const channel = `room:${roomId}:channel`;
-        const listenerCount = this.eventEmitter.listenerCount(channel);
-        console.log(`[SSE] emit to ${channel} | 리스너 수: ${listenerCount}`);
-        this.eventEmitter.emit(channel, JSON.stringify(data));
-        console.log(`[SSE] Sending event to room ${roomId}`, data);
-    }
+        const streamKey = `room:${roomId}:stream`;
+        const client = this.redisService.getClient();
+        await client.xadd(streamKey, 'MAXLEN', '~', 1000, '*', 'data', JSON.stringify({ data }));
 
-    async unsubscribeFromRoom(roomId: string) {
-        const channel = `room:${roomId}:channel`;
-        this.eventEmitter.removeAllListeners(channel);
+        console.log(`[SSE] Sending event to room ${roomId}`, data);
     }
 
     // 방 생성 - MySQL 직접 저장
@@ -127,53 +122,101 @@ export class MusicService {
         }
     }
 
-    // SSE 스트림 생성 - EventEmitter 사용
-    createMusicListStream(roomId: string): Observable<any> {
-        const channel = `room:${roomId}:channel`;
-        
+    createRedisStream(roomId: string): Observable<any> {
+        const client = this.redisService.getClient();
+        const group = `room:${roomId}:group`;
+        const consumer = `sse-${Math.random().toString(36).substring(2)}`;
+        const streamKey = `room:${roomId}:stream`;
+
         return new Observable((observer) => {
+            let isRunning = true;
 
             // 초기 데이터 전송
-            this.getMusicList(roomId).then(initialData => {
-                observer.next({
-                    type: 'music-list',
-                    data: { musicList: initialData },
-                });
-            }).catch(err => {
-                console.error('초기 음악 리스트 로드 실패:', err);
-                observer.error(err);
-            });
-
-            // EventEmitter 리스너 설정
-            const listener = (message: string) => {
+            const sendInitialData = async () => {
                 try {
+                    const musicList = await this.getMusicList(roomId);
                     observer.next({
+                        data: {musicList: musicList},
                         type: 'music-list',
-                        data: JSON.parse(message),
                     });
+                    console.log(`[SSE] Sent initial music list for room ${roomId}`);
                 } catch (err) {
-                    console.error('SSE 메시지 파싱 실패:', err);
-                    observer.error(err);
+                    console.warn(`[SSE] Failed to send initial data for room ${roomId}:(연결유지)`, err);
                 }
             };
+
+            const initGroup = async () => {
+                try {
+                    await client.xgroup('CREATE', streamKey, group, '$', 'MKSTREAM');
+                } catch (err) {
+                    if (!String(err.message).includes('BUSYGROUP')) {
+                    console.error('xgroup create error:', err);
+                    }
+                }
+            }
+
+            const poll = async () => {
+                while (isRunning) {
+                    try {
+                        const response = await client.xreadgroup(
+                        'GROUP', group, consumer,
+                        'COUNT', 1,
+                        'BLOCK', 1000,
+                        'STREAMS', streamKey, '>'
+                        ) as [string, [string, string[]][]][] | null;
+
+                        if (response) {
+                        for (const [, messages] of response) {
+                            for (const [id, fields] of messages) {
+                                const dataMap: Record<string, string> = {};
+                                for (let i = 0; i < fields.length; i += 2) {
+                                dataMap[fields[i]] = fields[i + 1];
+                                }
+
+                                if (!dataMap['data']) continue;
+
+                                try {
+                                    const payload = JSON.parse(dataMap['data']);
+                                    observer.next({
+                                        data: payload.data,
+                                        type: 'music-list'
+                                    });
+                                    await client.xack(streamKey, group, id);
+                                } catch (err) {
+                                    console.error('[RedisStream SSE] JSON parse error:', err);
+                                }
+                            }
+                        }
+                        }
+                    } catch (e) {
+                        console.error('[RedisStream SSE] Error:', e);
+                    }
+                }
+            };
+
+            const startPing = () => {
+                const pingInterval = setInterval(() => {
+                    if (!isRunning) {
+                        clearInterval(pingInterval);
+                        return;
+                    }
+                    observer.next({
+                        data: 'ping',
+                        type: 'ping',
+                    });
+                }, 15000);
+            };
+
+            initGroup()
+                .then(() => sendInitialData())
+                .then(() => {
+                    startPing();
+                    poll()
+                });
             
-            console.log(`[SSE] Setting up listener for room ${roomId}`);
-            this.eventEmitter.on(channel, listener);
-            console.log(`[SSE] Listener 등록됨: ${channel}`);
-
-            // ping 
-            const pingInterval = setInterval(() => {
-            observer.next({
-                type: 'ping',
-                data: { timestamp: new Date().toISOString() },
-            });
-            }, 15000); // 15초마다 ping
-
-            // 정리 함수
             return () => {
-                console.log(`[SSE] Cleaning up subscription for room ${roomId}`);
-                clearInterval(pingInterval); // ping 정지
-                this.eventEmitter.removeListener(channel, listener);
+                isRunning = false;
+                console.log(`[SSE] Closed stream for ${roomId}`);
             };
         });
     }
