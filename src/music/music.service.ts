@@ -18,6 +18,7 @@ export class MusicService {
     async sendToRoom(roomId: string, data: any) {
         const channel = `room:${roomId}:channel`;
         this.eventEmitter.emit(channel, JSON.stringify(data));
+        console.log(`[SSE] Sending event to room ${roomId}`, data);
     }
 
     async unsubscribeFromRoom(roomId: string) {
@@ -152,7 +153,8 @@ export class MusicService {
                     observer.error(err);
                 }
             };
-
+            
+            console.log(`[SSE] Setting up listener for room ${roomId}`);
             this.eventEmitter.on(channel, listener);
 
             // 정리 함수
