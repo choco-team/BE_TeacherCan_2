@@ -17,6 +17,8 @@ export class MusicService {
     // Redis PubSub 대신 EventEmitter 사용
     async sendToRoom(roomId: string, data: any) {
         const channel = `room:${roomId}:channel`;
+        const listenerCount = this.eventEmitter.listenerCount(channel);
+        console.log(`[SSE] emit to ${channel} | 리스너 수: ${listenerCount}`);
         this.eventEmitter.emit(channel, JSON.stringify(data));
         console.log(`[SSE] Sending event to room ${roomId}`, data);
     }
@@ -130,7 +132,6 @@ export class MusicService {
         const channel = `room:${roomId}:channel`;
         
         return new Observable((observer) => {
-            console.log(`[SSE] Listener 등록 for room ${roomId}`);
 
             // 초기 데이터 전송
             this.getMusicList(roomId).then(initialData => {
@@ -158,6 +159,16 @@ export class MusicService {
             
             console.log(`[SSE] Setting up listener for room ${roomId}`);
             this.eventEmitter.on(channel, listener);
+            console.log(`[SSE] Listener 등록됨: ${channel}`);
+
+
+            // ping 
+            const pingInterval = setInterval(() => {
+            observer.next({
+                type: 'ping',
+                data: { timestamp: new Date().toISOString() },
+            });
+            }, 15000); // 15초마다 ping
 
             // ping 
             const pingInterval = setInterval(() => {
