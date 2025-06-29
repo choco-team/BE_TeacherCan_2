@@ -13,7 +13,7 @@ export class MusicController {
 
     @Sse('/sse')
     streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Observable<any> {
-        const stream = this.musicService.createMusicListStream(roomId);
+        const stream = this.musicService.createRedisStream(roomId);
         
         // 클라이언트 연결 해제 처리
         const res = (req as any).res;
