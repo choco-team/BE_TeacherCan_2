@@ -161,15 +161,6 @@ export class MusicService {
             this.eventEmitter.on(channel, listener);
             console.log(`[SSE] Listener 등록됨: ${channel}`);
 
-
-            // ping 
-            const pingInterval = setInterval(() => {
-            observer.next({
-                type: 'ping',
-                data: { timestamp: new Date().toISOString() },
-            });
-            }, 15000); // 15초마다 ping
-
             // ping 
             const pingInterval = setInterval(() => {
             observer.next({
