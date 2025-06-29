@@ -130,6 +130,8 @@ export class MusicService {
         const channel = `room:${roomId}:channel`;
         
         return new Observable((observer) => {
+            console.log(`[SSE] Listener 등록 for room ${roomId}`);
+
             // 초기 데이터 전송
             this.getMusicList(roomId).then(initialData => {
                 observer.next({
@@ -157,9 +159,18 @@ export class MusicService {
             console.log(`[SSE] Setting up listener for room ${roomId}`);
             this.eventEmitter.on(channel, listener);
 
+            // ping 
+            const pingInterval = setInterval(() => {
+            observer.next({
+                event: 'ping',
+                data: { timestamp: new Date().toISOString() },
+            });
+            }, 15000); // 15초마다 ping
+
             // 정리 함수
             return () => {
                 console.log(`[SSE] Cleaning up subscription for room ${roomId}`);
+                clearInterval(pingInterval); // ping 정지
                 this.eventEmitter.removeListener(channel, listener);
             };
         });
