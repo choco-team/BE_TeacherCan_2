@@ -135,7 +135,7 @@ export class MusicService {
             // 초기 데이터 전송
             this.getMusicList(roomId).then(initialData => {
                 observer.next({
-                    event: 'music-list',
+                    type: 'music-list',
                     data: { musicList: initialData },
                 });
             }).catch(err => {
@@ -147,7 +147,7 @@ export class MusicService {
             const listener = (message: string) => {
                 try {
                     observer.next({
-                        event: 'music-list',
+                        type: 'music-list',
                         data: JSON.parse(message),
                     });
                 } catch (err) {
@@ -162,7 +162,7 @@ export class MusicService {
             // ping 
             const pingInterval = setInterval(() => {
             observer.next({
-                event: 'ping',
+                type: 'ping',
                 data: { timestamp: new Date().toISOString() },
             });
             }, 15000); // 15초마다 ping
