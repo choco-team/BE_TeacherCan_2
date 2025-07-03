@@ -5,6 +5,7 @@ import { MusicSQLService } from './music.sql.service';
 import { Observable } from 'rxjs';
 import { EventEmitter } from 'events';
 import { RedisService } from 'src/redis/redis.service';
+import { RedisStreamService } from 'src/redis/redis-stream.service';
 
 @Injectable()
 export class MusicService {
@@ -13,6 +14,7 @@ export class MusicService {
         private readonly cryptoService: CryptoService,
         private readonly musicSQLService: MusicSQLService,
         private readonly redisService: RedisService,
+        private readonly redisStreamService: RedisStreamService,
     ) {}
 
     async sendToRoom(roomId: string, data: any) {
@@ -122,102 +124,23 @@ export class MusicService {
         }
     }
 
-    createRedisStream(roomId: string): Observable<any> {
-        const client = this.redisService.getClient();
-        const group = `room:${roomId}:group`;
-        const consumer = `sse-${Math.random().toString(36).substring(2)}`;
+    async createRedisStream(roomId: string): Promise<Observable<any>> {
         const streamKey = `room:${roomId}:stream`;
-
-        return new Observable((observer) => {
-            let isRunning = true;
-
-            // 초기 데이터 전송
-            const sendInitialData = async () => {
-                try {
-                    const musicList = await this.getMusicList(roomId);
-                    observer.next({
-                        data: {musicList: musicList},
-                        type: 'music-list',
-                    });
-                    console.log(`[SSE] Sent initial music list for room ${roomId}`);
-                } catch (err) {
-                    console.warn(`[SSE] Failed to send initial data for room ${roomId}:(연결유지)`, err);
-                }
+        const group = `room:${roomId}:group`;
+        const getInitialPayload = async () => {
+            const musicList = await this.getMusicList(roomId);
+            const { roomTitle } = await this.getRoomTitle(roomId);
+            return {
+                type: 'init-music-list',
+                data: { musicList, roomTitle },
             };
+        }
 
-            const initGroup = async () => {
-                try {
-                    await client.xgroup('CREATE', streamKey, group, '$', 'MKSTREAM');
-                } catch (err) {
-                    if (!String(err.message).includes('BUSYGROUP')) {
-                    console.error('xgroup create error:', err);
-                    }
-                }
-            }
-
-            const poll = async () => {
-                while (isRunning) {
-                    try {
-                        const response = await client.xreadgroup(
-                        'GROUP', group, consumer,
-                        'COUNT', 1,
-                        'BLOCK', 1000,
-                        'STREAMS', streamKey, '>'
-                        ) as [string, [string, string[]][]][] | null;
-
-                        if (response) {
-                        for (const [, messages] of response) {
-                            for (const [id, fields] of messages) {
-                                const dataMap: Record<string, string> = {};
-                                for (let i = 0; i < fields.length; i += 2) {
-                                dataMap[fields[i]] = fields[i + 1];
-                                }
-
-                                if (!dataMap['data']) continue;
-
-                                try {
-                                    const payload = JSON.parse(dataMap['data']);
-                                    observer.next({
-                                        data: payload.data,
-                                        type: 'music-list'
-                                    });
-                                    await client.xack(streamKey, group, id);
-                                } catch (err) {
-                                    console.error('[RedisStream SSE] JSON parse error:', err);
-                                }
-                            }
-                        }
-                        }
-                    } catch (e) {
-                        console.error('[RedisStream SSE] Error:', e);
-                    }
-                }
-            };
-
-            const startPing = () => {
-                const pingInterval = setInterval(() => {
-                    if (!isRunning) {
-                        clearInterval(pingInterval);
-                        return;
-                    }
-                    observer.next({
-                        data: 'ping',
-                        type: 'ping',
-                    });
-                }, 15000);
-            };
-
-            initGroup()
-                .then(() => sendInitialData())
-                .then(() => {
-                    startPing();
-                    poll()
-                });
-            
-            return () => {
-                isRunning = false;
-                console.log(`[SSE] Closed stream for ${roomId}`);
-            };
-        });
+        return this.redisStreamService.createStreamObservable(
+            streamKey,
+            group,
+            getInitialPayload
+        );
     }
+
 }

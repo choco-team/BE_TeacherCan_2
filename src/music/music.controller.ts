@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Post, Query, Req, Sse } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto } from 'src/dto/music.dto';
+import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
 import { Observable } from 'rxjs';
 
@@ -12,8 +12,8 @@ export class MusicController {
     ) {}
 
     @Sse('/sse')
-    streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Observable<any> {
-        const stream = this.musicService.createRedisStream(roomId);
+    async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Promise<Observable<any>> {
+        const stream = await this.musicService.createRedisStream(roomId);
         
         // 클라이언트 연결 해제 처리
         const res = (req as any).res;
