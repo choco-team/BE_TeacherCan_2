@@ -135,9 +135,10 @@ export class MusicService {
             const sendInitialData = async () => {
                 try {
                     const musicList = await this.getMusicList(roomId);
+                    const roomTitle = (await this.getRoomTitle(roomId)).roomTitle;
                     observer.next({
-                        data: {musicList: musicList},
-                        type: 'music-list',
+                        data: {musicList, roomTitle},
+                        type: 'init-music-list',
                     });
                     console.log(`[SSE] Sent initial music list for room ${roomId}`);
                 } catch (err) {
