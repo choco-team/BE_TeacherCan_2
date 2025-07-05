@@ -74,8 +74,8 @@ export class RedisStreamService implements OnModuleDestroy{
                 try {
                   const parsed = JSON.parse(dataMap['data']);
                   observer.next({
-                    type: parsed.type || 'music-list',
-                    data: parsed.data,
+                    type: parsed.data.type || 'new-list',
+                    data: parsed.data.data,
                   });
                   await client.xack(streamKey, group, id);
                 } catch (err) {
@@ -91,13 +91,14 @@ export class RedisStreamService implements OnModuleDestroy{
       };
 
       const startPing = () => {
+        observer.next({ type: 'ping', data: 'ping' });
         pingInterval = setInterval(() => {
           if (!isRunning || this.isDestroyed) {
             clearInterval(pingInterval);
             return;
           }
           observer.next({ type: 'ping', data: 'ping' });
-        }, 15000);
+        }, 60000);
       };
 
       initGroup()

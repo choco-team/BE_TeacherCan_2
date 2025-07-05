@@ -17,14 +17,6 @@ export class MusicService {
         private readonly redisStreamService: RedisStreamService,
     ) {}
 
-    async sendToRoom(roomId: string, data: any) {
-        const streamKey = `room:${roomId}:stream`;
-        const client = this.redisService.getClient();
-        await client.xadd(streamKey, 'MAXLEN', '~', 1000, '*', 'data', JSON.stringify({ data }));
-
-        console.log(`[SSE] Sending event to room ${roomId}`, data);
-    }
-
     // 방 생성 - MySQL 직접 저장
     async makeNewRoom(roomTitle: string) {
         const roomId = uuidv4();
@@ -86,9 +78,7 @@ export class MusicService {
                 timeStamp: new Date(),
             };
 
-            await this.musicSQLService.addMusicToRoom(newMusic);
-            
-            return { success: true };
+            return await this.musicSQLService.addMusicToRoom(newMusic);
         } catch (error) {
             if (error instanceof HttpException) {
                 throw error;
@@ -109,13 +99,7 @@ export class MusicService {
     // 음악 삭제 - MySQL 직접 삭제
     async removeMusicInRoom(roomId: string, musicId: string) {
         try {
-            const deletedCount = await this.musicSQLService.removeMusicFromRoom(roomId, musicId);
-            
-            if (deletedCount === 0) {
-                throw new HttpException('해당 음악을 찾을 수 없습니다', HttpStatus.NOT_FOUND);
-            }
-
-            return { success: true };
+            return await this.musicSQLService.removeMusicFromRoom(roomId, musicId);
         } catch (error) {
             if (error instanceof HttpException) {
                 throw error;
@@ -124,6 +108,14 @@ export class MusicService {
         }
     }
 
+    //stream에 데이터 전송
+    async sendToRoom(roomId: string, data: any) {
+        const streamKey = `room:${roomId}:stream`;
+        const client = this.redisService.getClient();
+        await client.xadd(streamKey, 'MAXLEN', '~', 1000, '*', 'data', JSON.stringify({ data }));
+    }
+
+    //stream연결
     async createRedisStream(roomId: string): Promise<Observable<any>> {
         const streamKey = `room:${roomId}:stream`;
         const group = `room:${roomId}:group`;
