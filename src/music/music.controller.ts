@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Post, Query, Req, Sse } from '@nestjs/common';
+import { Body, Controller, Delete, Get, InternalServerErrorException, Post, Query, Req, Sse } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto, StudentEntranceInfoDto } from 'src/dto/music.dto';
+import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
 import { Observable } from 'rxjs';
 
@@ -12,8 +12,8 @@ export class MusicController {
     ) {}
 
     @Sse('/sse')
-    streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Observable<any> {
-        const stream = this.musicService.createRedisStream(roomId);
+    async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Promise<Observable<any>> {
+        const stream = await this.musicService.createRedisStream(roomId);
         
         // 클라이언트 연결 해제 처리
         const res = (req as any).res;
@@ -52,12 +52,25 @@ export class MusicController {
     @ApiBody({type: AddMusicInRoomDto})
     async addMusicInRoom(@Body() body: AddMusicInRoomDto){
         const {roomId, musicId, title, student} = body
-        await this.musicService.addMusicInRoom(roomId, musicId, title, student)
-        const updatedMusicList = await this.musicService.getMusicList(roomId);
-        
-        // SSE 알림 (in-memory event emitter 사용)
-        this.musicService.sendToRoom(roomId, { musicList: updatedMusicList });
-        return { success: true }
+        try{
+            const savedMusic = await this.musicService.addMusicInRoom(roomId, musicId, title, student)
+
+            this.musicService.sendToRoom(roomId, {
+                type: 'new-music',
+                data: {musicList: {
+                    id: savedMusic.id,
+                    musicId: savedMusic.musicId,
+                    title: savedMusic.title,
+                    studentName: savedMusic.studentName,
+                    timeStamp: savedMusic.timeStamp
+                }},
+            });
+            return { success: true }
+        } catch (err) {
+            if (err) throw err;
+            throw new InternalServerErrorException('음악 신청 저장 중 문제가 발생했습니다');
+        }
+
     }
 
     @Delete('/music')
@@ -65,11 +78,19 @@ export class MusicController {
     @ApiBody({type: DeleteMusicInRoomDto})
     async removeMusicInRoom(@Body() body: DeleteMusicInRoomDto){
         const {roomId, musicId} = body
-        await this.musicService.removeMusicInRoom(roomId, musicId)
-        const updatedMusicList = await this.musicService.getMusicList(roomId);
-        
-        // SSE 알림 (in-memory event emitter 사용)
-        this.musicService.sendToRoom(roomId, { musicList: updatedMusicList });
-        return { success: true }
+        try {
+            const removedMusicId = await this.musicService.removeMusicInRoom(roomId, musicId)
+            this.musicService.sendToRoom(roomId, {
+            type: 'deleted-music',
+            data: {
+                id: removedMusicId
+            },
+            });
+            return { success: true }
+        } catch (err) {
+            if (err) throw err;
+            throw new InternalServerErrorException('음악 신청 삭제 중 문제가 발생했습니다');
+        }
+
     }
 }
