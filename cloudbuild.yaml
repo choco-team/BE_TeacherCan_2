@@ -1,20 +1,17 @@
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build', 
-      '-t', 'asia-northeast1-docker.pkg.dev/teachercan-436815/be_teachercan_2/teachercan-be-new',
-      '.'
-    ]
+  # 1️⃣ Node.js 환경에서 `npm install` 실행 (의존성 설치)
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['ci']
 
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args: [
-      'run', 'deploy', 'teachercan-be-new',
-      '--image', 'asia-northeast1-docker.pkg.dev/teachercan-436815/be_teachercan_2/teachercan-be-new',
-      '--region', 'asia-northeast1',
-      '--platform', 'managed',
-      '--allow-unauthenticated'
-    ]
+  # 2️⃣ NestJS 프로젝트 빌드 (`dist/` 폴더 생성됨)
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['run', 'build']
 
-options:
-  logging: CLOUD_LOGGING_ONLY
+  # 3️⃣ 빌드 결과를 `/workspace/dist/`에 저장
+  - name: 'gcr.io/cloud-builders/bash'
+    args: ['ls', '-la', '/workspace/dist']
+
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-cloudbuild-artifacts/'
+    paths: ['dist/**', 'exam/**']  # ✅ exam도 포함시킴
