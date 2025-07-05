@@ -1,24 +1,22 @@
 steps:
+  # Docker 이미지 빌드
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - build
-      - '-t'
-      - 'asia-northeast1-docker.pkg.dev/teachercan-436815/cloud-run-source-deploy/be_teachercan_2/back-end-teachercan-main:$COMMIT_SHA'
-      - '.'
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - push
-      - 'asia-northeast1-docker.pkg.dev/teachercan-436815/cloud-run-source-deploy/be_teachercan_2/back-end-teachercan-main:$COMMIT_SHA'
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args: [
+      'build', 
+      '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/be_teachercan_2/teachercan-be-new',
+      '.'
+    ]
+
+  # Cloud Run에 배포
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
-    args:
-      - run
-      - services
-      - update
-      - back-end-teachercan-main
-      - '--image=asia-northeast1-docker.pkg.dev/teachercan-436815/cloud-run-source-deploy/be_teachercan_2/back-end-teachercan-main:$COMMIT_SHA'
-      - '--region=asia-northeast1'
-      - '--platform=managed'
-      - '--quiet'
+    args: [
+      'run', 'deploy', 'teachercan-be-new',
+      '--image', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/be_teachercan_2/teachercan-be-new',
+      '--region', 'asia-northeast1',
+      '--platform', 'managed',
+      '--allow-unauthenticated'
+    ]
+
 options:
   logging: CLOUD_LOGGING_ONLY
