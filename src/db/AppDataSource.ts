@@ -8,7 +8,7 @@ import { Student } from './entities/student.entity';
 import { Music } from './entities/music.entity';
 
 export const AppDataSource = new DataSource({
-  type: 'mysql',
+  type: 'postgres',
   host: process.env.DATABASE_HOST || 'localhost',
   port: Number(process.env.DATABASE_PORT) || 3306,
   username: process.env.DATABASE_USER || 'root',
@@ -16,8 +16,5 @@ export const AppDataSource = new DataSource({
   database: process.env.DATABASE_NAME || 'mydatabase',
   entities: [User, Session,  RsaKey, Room, Student, Music],
   logging: process.env.LOCAL === 'true',
-  synchronize: process.env.LOCAL === 'true',
-  extra: {
-    authPlugins: 'caching_sha2_password',
-  }
+  ssl: { rejectUnauthorized: false},
 });
