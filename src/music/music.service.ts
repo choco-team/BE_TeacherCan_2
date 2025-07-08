@@ -4,26 +4,18 @@ import { v4 as uuidv4} from 'uuid'
 import { MusicSQLService } from './music.sql.service';
 import { Observable } from 'rxjs';
 import { EventEmitter } from 'events';
+import { RedisService } from 'src/redis/redis.service';
+import { RedisStreamService } from 'src/redis/redis-stream.service';
 
 @Injectable()
 export class MusicService {
-    private eventEmitter = new EventEmitter(); // Redis PubSub 대신 EventEmitter 사용
 
     constructor(
         private readonly cryptoService: CryptoService,
-        private readonly musicSQLService: MusicSQLService
+        private readonly musicSQLService: MusicSQLService,
+        private readonly redisService: RedisService,
+        private readonly redisStreamService: RedisStreamService,
     ) {}
-
-    // Redis PubSub 대신 EventEmitter 사용
-    async sendToRoom(roomId: string, data: any) {
-        const channel = `room:${roomId}:channel`;
-        this.eventEmitter.emit(channel, JSON.stringify(data));
-    }
-
-    async unsubscribeFromRoom(roomId: string) {
-        const channel = `room:${roomId}:channel`;
-        this.eventEmitter.removeAllListeners(channel);
-    }
 
     // 방 생성 - MySQL 직접 저장
     async makeNewRoom(roomTitle: string) {
@@ -86,9 +78,7 @@ export class MusicService {
                 timeStamp: new Date(),
             };
 
-            await this.musicSQLService.addMusicToRoom(newMusic);
-            
-            return { success: true };
+            return await this.musicSQLService.addMusicToRoom(newMusic);
         } catch (error) {
             if (error instanceof HttpException) {
                 throw error;
@@ -109,13 +99,7 @@ export class MusicService {
     // 음악 삭제 - MySQL 직접 삭제
     async removeMusicInRoom(roomId: string, musicId: string) {
         try {
-            const deletedCount = await this.musicSQLService.removeMusicFromRoom(roomId, musicId);
-            
-            if (deletedCount === 0) {
-                throw new HttpException('해당 음악을 찾을 수 없습니다', HttpStatus.NOT_FOUND);
-            }
-
-            return { success: true };
+            return await this.musicSQLService.removeMusicFromRoom(roomId, musicId);
         } catch (error) {
             if (error instanceof HttpException) {
                 throw error;
@@ -124,42 +108,31 @@ export class MusicService {
         }
     }
 
-    // SSE 스트림 생성 - EventEmitter 사용
-    createMusicListStream(roomId: string): Observable<any> {
-        const channel = `room:${roomId}:channel`;
-        
-        return new Observable((observer) => {
-            // 초기 데이터 전송
-            this.getMusicList(roomId).then(initialData => {
-                observer.next({
-                    event: 'music-list',
-                    data: { musicList: initialData },
-                });
-            }).catch(err => {
-                console.error('초기 음악 리스트 로드 실패:', err);
-                observer.error(err);
-            });
-
-            // EventEmitter 리스너 설정
-            const listener = (message: string) => {
-                try {
-                    observer.next({
-                        event: 'music-list',
-                        data: JSON.parse(message),
-                    });
-                } catch (err) {
-                    console.error('SSE 메시지 파싱 실패:', err);
-                    observer.error(err);
-                }
-            };
-
-            this.eventEmitter.on(channel, listener);
-
-            // 정리 함수
-            return () => {
-                console.log(`[SSE] Cleaning up subscription for room ${roomId}`);
-                this.eventEmitter.removeListener(channel, listener);
-            };
-        });
+    //stream에 데이터 전송
+    async sendToRoom(roomId: string, data: any) {
+        const streamKey = `room:${roomId}:stream`;
+        const client = this.redisService.getClient();
+        await client.xadd(streamKey, 'MAXLEN', '~', 1000, '*', 'data', JSON.stringify({ data }));
     }
+
+    //stream연결
+    async createRedisStream(roomId: string): Promise<Observable<any>> {
+        const streamKey = `room:${roomId}:stream`;
+        const group = `room:${roomId}:group`;
+        const getInitialPayload = async () => {
+            const musicList = await this.getMusicList(roomId);
+            const { roomTitle } = await this.getRoomTitle(roomId);
+            return {
+                type: 'init-music-list',
+                data: { musicList, roomTitle },
+            };
+        }
+
+        return this.redisStreamService.createStreamObservable(
+            streamKey,
+            group,
+            getInitialPayload
+        );
+    }
+
 }
