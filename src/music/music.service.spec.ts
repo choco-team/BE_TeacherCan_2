@@ -11,6 +11,8 @@ import { HttpException } from '@nestjs/common';
 import { expect, jest } from '@jest/globals';
 import { RoomIdDto, RoomTitleDto, MusicDto } from '../dto/music.dto';
 import { MockInstance } from 'jest-mock';
+import { RedisService } from '../redis/redis.service';
+import { RedisStreamService } from '../redis/redis-stream.service';
 
 interface StudentInfo {
   name: string;
@@ -29,7 +31,7 @@ interface MockMusicSQLService {
   getRoomInfomation: MockInstance<(roomId: string) => Promise<RoomInformation>>;
   getAllMusicInRoom: MockInstance<(roomId: string) => Promise<MusicDto[]>>;
   findStudentInRoom: MockInstance<(roomId: string) => Promise<StudentInfo[]>>;
-  addMusicToRoom: MockInstance<(musicData: any) => Promise<void>>;
+  addMusicToRoom: MockInstance<(musicData: any) => Promise<any>>;
   findMusicInRoom: MockInstance<(roomId: string, musicId: string) => Promise<MusicDto | null>>;
   removeMusicFromRoom: MockInstance<(roomId: string, musicId: string) => Promise<number>>;
 }
@@ -57,6 +59,8 @@ describe('MusicService', () => {
         MusicService,
         { provide: MusicSQLService, useValue: mockMusicSQLService },
         { provide: CryptoService, useValue: {} },
+        { provide: RedisService, useValue: { getClient: jest.fn().mockReturnValue({ xadd: jest.fn() }) } }, // mock
+        { provide: RedisStreamService, useValue: { createStreamObservable: jest.fn() } }, // mock
       ],
     }).compile();
 
@@ -112,9 +116,16 @@ describe('MusicService', () => {
     it('음악 추가 성공', async () => {
       musicSQLService.getRoomTitle.mockResolvedValue({ roomTitle: '테스트방' });
       musicSQLService.findMusicInRoom.mockResolvedValue(null);
-      musicSQLService.addMusicToRoom.mockResolvedValue(undefined);
+      const musicEntity = {
+        musicId: 'music-1',
+        title: '노래제목',
+        roomId: 'room-1',
+        studentName: '학생A',
+        timeStamp: new Date(),
+      };
+      musicSQLService.addMusicToRoom.mockResolvedValue(musicEntity);
       const result = await service.addMusicInRoom('room-1', 'music-1', '노래제목', '학생A');
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual(musicEntity);
     });
     it('이미 신청한 곡이면 예외', async () => {
       musicSQLService.getRoomTitle.mockResolvedValue({ roomTitle: '테스트방' });
@@ -153,10 +164,10 @@ describe('MusicService', () => {
     it('음악 삭제 성공', async () => {
       musicSQLService.removeMusicFromRoom.mockResolvedValue(1);
       const result = await service.removeMusicInRoom('room-1', 'music-1');
-      expect(result).toEqual({ success: true });
+      expect(result).toBe(1);
     });
     it('음악이 없으면 예외', async () => {
-      musicSQLService.removeMusicFromRoom.mockResolvedValue(0);
+      musicSQLService.removeMusicFromRoom.mockImplementation(() => { throw new HttpException('not found', 404); });
       await expect(
         service.removeMusicInRoom('room-1', 'music-1')
       ).rejects.toThrow();
@@ -164,10 +175,20 @@ describe('MusicService', () => {
   });
 
   describe('sendToRoom', () => {
-    it('이벤트가 정상적으로 emit되는지 확인', async () => {
-      const spy = jest.spyOn((service as any).eventEmitter, 'emit');
+    it('Redis xadd가 정상적으로 호출되는지 확인', async () => {
+      const mockXadd = jest.fn();
+      const mockGetClient = jest.fn().mockReturnValue({ xadd: mockXadd });
+      // service의 redisService를 직접 할당하거나, 모듈에서 useValue로 주입
+      (service as any).redisService = { getClient: mockGetClient };
+
       await service.sendToRoom('room-1', { test: 1 });
-      expect(spy).toBeCalled();
+
+      expect(mockGetClient).toBeCalled();
+      expect(mockXadd).toBeCalledWith(
+        'room:room-1:stream',
+        'MAXLEN', '~', 1000, '*', 'data',
+        JSON.stringify({ data: { test: 1 } })
+      );
     });
   });
 }); 
