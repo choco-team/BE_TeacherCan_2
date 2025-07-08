@@ -104,12 +104,12 @@ export class MusicSQLService {
 
     // 음악 삭제
     async removeMusicFromRoom(roomId: string, musicId: string) {
-        const result = await this.musicRepository.delete({
-            roomId,
-            musicId
-        });
-        
-        return result.affected || 0;
+        const music = await this.musicRepository.findOneBy({ roomId, musicId });
+        if (!music) throw new HttpException('해당 음악을 찾을 수 없습니다', HttpStatus.NOT_FOUND);
+
+        const deletedId = music.id;
+        await this.musicRepository.remove(music);
+        return deletedId
     }
 
     // 방 삭제 (필요시)
