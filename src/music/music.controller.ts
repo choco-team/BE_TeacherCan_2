@@ -2,7 +2,6 @@ import { Body, Controller, Delete, Get, InternalServerErrorException, Post, Quer
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
-import { Observable } from 'rxjs';
 
 @ApiTags('/music-request')
 @Controller('/music-request')
@@ -11,18 +10,33 @@ export class MusicController {
         private readonly musicService: MusicService
     ) {}
 
-    @Sse('/sse')
-    async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Promise<Observable<any>> {
-        const stream = await this.musicService.createRedisStream(roomId);
-        
-        // 클라이언트 연결 해제 처리
-        const res = (req as any).res;
-        res.on('close', () => {
-            console.log(`[SSE] Client disconnected from room ${roomId}`);
-        });
+    @Get('poll')
+    // @ApiOperation({summary: '음악 목록 롱폴링', description: '롱폴링 요청을 처리합니다.'})
+    // @ApiBody({type: RoomTitleDto})
+    // @ApiResponse({description: "업데이트 된 데이터를 받아옵니다.", type: RoomIdDto})
+    async pollMusic(
+        @Query('roomId') roomId: string,
+        @Query('lastId') lastId: string,
+    ) {
+        if (!roomId) {
+        return { updates: [], error: 'roomId는 필수입니다.' };
+        }
 
-        return stream;
+        const result = await this.musicService.pollMusicStream(roomId, lastId);
+        return result;
     }
+
+
+    // @Sse('/sse')
+    // async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Promise<Observable<any>> {
+    //     const stream = await this.musicService.createRedisStream(roomId);
+    //     // 클라이언트 연결 해제 처리
+    //     const res = (req as any).res;
+    //     res.on('close', () => {
+    //         console.log(`[SSE] Client disconnected from room ${roomId}`);
+    //     });
+    //     return stream;
+    // }
 
     @Post('/room')
     @ApiOperation({summary: '방 생성', description: '음악 추천을 위한 방을 생성합니다'})
@@ -56,14 +70,9 @@ export class MusicController {
             const savedMusic = await this.musicService.addMusicInRoom(roomId, musicId, title, student)
 
             this.musicService.sendToRoom(roomId, {
-                type: 'new-music',
-                data: {musicList: {
-                    id: savedMusic.id,
-                    musicId: savedMusic.musicId,
-                    title: savedMusic.title,
-                    studentName: savedMusic.studentName,
-                    timeStamp: savedMusic.timeStamp
-                }},
+                musicId: savedMusic.musicId,
+                title: savedMusic.title,
+                studentName: savedMusic.studentName,
             });
             return { success: true }
         } catch (err) {

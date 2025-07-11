@@ -11,12 +11,69 @@ interface StreamInitPayload {
 @Injectable()
 export class RedisStreamService implements OnModuleDestroy{
   private isDestroyed = false;
-
   constructor(private readonly redisService: RedisService) {}
 
   onModuleDestroy() {
     this.isDestroyed = true;
     console.log('[RedisStreamService] onModuleDestroy: 서비스 종료 중...');
+  }
+
+  async readStreamSinceLastId(
+    streamKey: string,
+    group: string,
+    consumer: string,
+    lastId: string,
+    timeout = 15000,
+  ) {
+    const client = this.redisService.getClient();
+
+    try {
+      await client.xgroup('CREATE', streamKey, group, '>', 'MKSTREAM');
+    } catch (err) {
+      if (!String(err.message).includes('BUSYGROUP')) {
+        console.error('[RedisStream] 그룹 생성 오류:', err);
+      }
+    }
+
+    console.log("lastId: ", lastId)
+
+    const readFromStream = async (id: string) => {
+      return await client.xreadgroup(
+        'GROUP', group, consumer,
+        'COUNT', 30,
+        'BLOCK', timeout,
+        'STREAMS', streamKey, id
+      ) as [string, [string, string[]][]][] | null;
+    };
+
+    let response = await readFromStream(lastId);
+
+    if (!response && lastId !== '>') {
+      response = await readFromStream('>');
+    }
+
+    if (!response) {
+      return []
+    }
+
+    const results = [];
+    for (const [, messages] of response) {
+      for (const [id, fields] of messages) {
+        const data: Record<string, string> = {};
+        for (let i = 0; i < fields.length; i += 2) {
+          data[fields[i]] = fields[i + 1];
+        }
+        results.push({ id, ...data });
+        await client.xack(streamKey, group, id);
+      }
+    }
+
+    // 300개 이상 쌓이면 삭제
+    await client.xtrim(streamKey, 'MAXLEN', '~', 100);
+
+    // Redis 7.0+인지 확인후 수정
+    //await client.call('XTRIM', streamKey, 'MINID', lastId);
+    return results;
   }
 
   createStreamObservable(

@@ -1,9 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CryptoService } from 'src/services/crypto.service';
 import { v4 as uuidv4} from 'uuid'
 import { MusicSQLService } from './music.sql.service';
-import { Observable } from 'rxjs';
-import { EventEmitter } from 'events';
 import { RedisService } from 'src/redis/redis.service';
 import { RedisStreamService } from 'src/redis/redis-stream.service';
 
@@ -11,7 +8,6 @@ import { RedisStreamService } from 'src/redis/redis-stream.service';
 export class MusicService {
 
     constructor(
-        private readonly cryptoService: CryptoService,
         private readonly musicSQLService: MusicSQLService,
         private readonly redisService: RedisService,
         private readonly redisStreamService: RedisStreamService,
@@ -110,29 +106,53 @@ export class MusicService {
 
     //stream에 데이터 전송
     async sendToRoom(roomId: string, data: any) {
-        const streamKey = `room:${roomId}:stream`;
+        const streamKey = `music-stream:${roomId}`;
         const client = this.redisService.getClient();
-        await client.xadd(streamKey, 'MAXLEN', '~', 1000, '*', 'data', JSON.stringify({ data }));
-    }
-
-    //stream연결
-    async createRedisStream(roomId: string): Promise<Observable<any>> {
-        const streamKey = `room:${roomId}:stream`;
-        const group = `room:${roomId}:group`;
-        const getInitialPayload = async () => {
-            const musicList = await this.getMusicList(roomId);
-            const { roomTitle } = await this.getRoomTitle(roomId);
-            return {
-                type: 'init-music-list',
-                data: { musicList, roomTitle },
-            };
-        }
-
-        return this.redisStreamService.createStreamObservable(
-            streamKey,
-            group,
-            getInitialPayload
+        console.log(data, streamKey)
+        const asd = await client.xadd(
+            streamKey, 
+            'MAXLEN', '~', 100,
+            '*',
+            'musicId', String(data.musicId ?? ''),
+            'title', String(data.title ?? ''),
+            'studentName', String(data.studentName ?? ''),
         );
+        console.log(asd)
     }
+
+    async pollMusicStream(roomId: string, lastId: string): Promise<any> {
+        const streamKey = `music-stream:${roomId}`;
+        const group = `music-group:${roomId}`;
+        const consumer = `consumer-${Math.random().toString(36).substring(2)}`;
+        const timeout = 30000
+        
+        const messages = await this.redisStreamService.readStreamSinceLastId(
+            streamKey, group, consumer, lastId || '>', timeout
+        );
+        
+        return {
+            musicList: messages
+        };
+    }
+
+    // //sse-stream연결
+    // async createRedisStream(roomId: string): Promise<Observable<any>> {
+    //     const streamKey = `room:${roomId}:stream`;
+    //     const group = `room:${roomId}:group`;
+    //     const getInitialPayload = async () => {
+    //         const musicList = await this.getMusicList(roomId);
+    //         const { roomTitle } = await this.getRoomTitle(roomId);
+    //         return {
+    //             type: 'init-music-list',
+    //             data: { musicList, roomTitle },
+    //         };
+    //     }
+
+    //     return this.redisStreamService.createStreamObservable(
+    //         streamKey,
+    //         group,
+    //         getInitialPayload
+    //     );
+    // }
 
 }
