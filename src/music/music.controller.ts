@@ -16,13 +16,12 @@ export class MusicController {
     // @ApiResponse({description: "업데이트 된 데이터를 받아옵니다.", type: RoomIdDto})
     async pollMusic(
         @Query('roomId') roomId: string,
-        @Query('lastId') lastId: string,
     ) {
         if (!roomId) {
         return { updates: [], error: 'roomId는 필수입니다.' };
         }
 
-        const result = await this.musicService.pollMusicStream(roomId, lastId);
+        const result = await this.musicService.pollMusicStream(roomId);
         return result;
     }
 

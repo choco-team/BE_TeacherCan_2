@@ -108,8 +108,7 @@ export class MusicService {
     async sendToRoom(roomId: string, data: any) {
         const streamKey = `music-stream:${roomId}`;
         const client = this.redisService.getClient();
-        console.log(data, streamKey)
-        const asd = await client.xadd(
+        await client.xadd(
             streamKey, 
             'MAXLEN', '~', 100,
             '*',
@@ -117,17 +116,16 @@ export class MusicService {
             'title', String(data.title ?? ''),
             'studentName', String(data.studentName ?? ''),
         );
-        console.log(asd)
     }
 
-    async pollMusicStream(roomId: string, lastId: string): Promise<any> {
+    async pollMusicStream(roomId: string): Promise<any> {
         const streamKey = `music-stream:${roomId}`;
         const group = `music-group:${roomId}`;
-        const consumer = `consumer-${Math.random().toString(36).substring(2)}`;
-        const timeout = 30000
+        const consumer = `consumer-${roomId}`;
+        const timeout = 10000
         
         const messages = await this.redisStreamService.readStreamSinceLastId(
-            streamKey, group, consumer, lastId || '>', timeout
+            streamKey, group, consumer, timeout
         );
         
         return {

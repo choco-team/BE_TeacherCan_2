@@ -1,4 +1,3 @@
-// src/services/redis/redis-stream.service.ts
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { RedisService } from './redis.service';
@@ -22,57 +21,57 @@ export class RedisStreamService implements OnModuleDestroy{
     streamKey: string,
     group: string,
     consumer: string,
-    lastId: string,
-    timeout = 15000,
+    timeout: number,
   ) {
     const client = this.redisService.getClient();
 
+    // stream 그룹생성 시도, 이미 있으면 넘어감
     try {
-      await client.xgroup('CREATE', streamKey, group, '>', 'MKSTREAM');
+      await client.xgroup('CREATE', streamKey, group, '0', 'MKSTREAM');
     } catch (err) {
       if (!String(err.message).includes('BUSYGROUP')) {
         console.error('[RedisStream] 그룹 생성 오류:', err);
+        throw err
       }
-    }
-
-    console.log("lastId: ", lastId)
-
-    const readFromStream = async (id: string) => {
-      return await client.xreadgroup(
-        'GROUP', group, consumer,
-        'COUNT', 30,
-        'BLOCK', timeout,
-        'STREAMS', streamKey, id
-      ) as [string, [string, string[]][]][] | null;
-    };
-
-    let response = await readFromStream(lastId);
-
-    if (!response && lastId !== '>') {
-      response = await readFromStream('>');
-    }
-
-    if (!response) {
-      return []
     }
 
     const results = [];
-    for (const [, messages] of response) {
-      for (const [id, fields] of messages) {
-        const data: Record<string, string> = {};
-        for (let i = 0; i < fields.length; i += 2) {
-          data[fields[i]] = fields[i + 1];
+
+    while (!this.isDestroyed) {
+      try {
+        console.log("!!!!!! 읽기 시도")
+        // xreadgroup시도, 새로운 데이터가 없으면 timeout동안 대기
+        const response = await client.xreadgroup(
+          'GROUP', group, consumer,
+          'COUNT', 1,
+          'BLOCK', timeout,
+          'STREAMS', streamKey, '>'
+        ) as [string, [string, string[]][]][] | null;
+
+        // 데이터가 없으면 xreadgroup 재시도
+        if (!response) continue;
+
+        // 데이터가 있으면 반환 후 반복 종료
+        for (const [, messages] of response) {
+          for (const [id, fields] of messages) {
+            const data: Record<string, string> = {};
+            for (let i = 0; i < fields.length; i += 2) {
+              data[fields[i]] = fields[i + 1];
+            }
+            results.push({ id, ...data });
+            await client.xack(streamKey, group, id);
+            await client.xdel(streamKey, id)
+          }
         }
-        results.push({ id, ...data });
-        await client.xack(streamKey, group, id);
+
+        break
+
+      } catch (err) {
+        console.error('[Stream] Polling error:', err);
+        await new Promise((r) => setTimeout(r, 500)); // 에러 발생 시 while문 재시도
       }
     }
 
-    // 300개 이상 쌓이면 삭제
-    await client.xtrim(streamKey, 'MAXLEN', '~', 100);
-
-    // Redis 7.0+인지 확인후 수정
-    //await client.call('XTRIM', streamKey, 'MINID', lastId);
     return results;
   }
 
