@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, InternalServerErrorException, Post, Query, Req, Sse } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomIdDto, RoomTitleDto } from 'src/dto/music.dto';
+import { AddMusicInRoomDto, DeleteMusicInRoomDto, MusicListResDto, RoomIdDto, RoomTitleDto } from 'src/dto/music.dto';
 import { MusicService } from './music.service';
+import { Observable } from 'rxjs';
 
 @ApiTags('/music-request')
 @Controller('/music-request')
@@ -57,6 +58,13 @@ export class MusicController {
     @ApiResponse({description: "방의 상세 정보를 가져옵니다", type: RoomTitleDto})
     async getRoomInformation(@Query('roomId') roomId: string){
         return await this.musicService.getRoomInformation(roomId)                
+    }
+
+    @Get('/music/list')
+    @ApiOperation({summary: '음악목록 가져오기', description: '방의 음악목록울 가져옵니다'})
+    @ApiResponse({description: "방의 음악목록울 가져옵니다", type: MusicListResDto})
+    async getMusicListByRoomId(@Query('roomId') roomId: string){
+        return await this.musicService.getMusicList(roomId)                
     }
 
 

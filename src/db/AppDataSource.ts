@@ -16,7 +16,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DATABASE_NAME || 'mydatabase',
   entities: [User, Session,  RsaKey, Room, Student, Music],
   logging: process.env.LOCAL === 'true',
-  synchronize: process.env.LOCAL === 'true',
+  // synchronize: process.env.LOCAL === 'true',
   extra: {
     authPlugins: 'caching_sha2_password',
   }

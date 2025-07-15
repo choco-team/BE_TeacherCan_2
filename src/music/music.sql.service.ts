@@ -66,7 +66,8 @@ export class MusicSQLService {
     async getAllMusicInRoom(roomId: string) {
         return await this.musicRepository.find({
             where: {roomId},
-            order: {timeStamp: 'ASC'} // 시간순 정렬
+            order: {timeStamp: 'ASC'}, // 시간순 정렬
+            select: ['id', 'musicId', 'roomId', 'studentName', 'title'], // 필요한 필드만 선택
         });
     }
 

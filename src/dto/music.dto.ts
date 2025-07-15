@@ -42,7 +42,15 @@ export class DeleteMusicInRoomDto{
 }
 
 export class MusicDto {
-    @ApiProperty({ description: '음악의 고유 식별자', example: "cbuZfY2S2UQ" })
+    @ApiProperty({ description: '음악의 pk', example: "12" })
+    @IsString()
+    id: number;
+
+    @ApiProperty({ description: '룸 ID', example: "272c87df-bf82-4012-bc76-f510714abcd3"})
+    @IsString()
+    roomId: string;
+
+    @ApiProperty({ description: '유투브 videoId', example: "cbuZfY2S2UQ" })
     @IsString()
     musicId: string;
   
@@ -50,21 +58,13 @@ export class MusicDto {
     @IsString()
     title: string;
   
-    @ApiProperty({ description: '룸 ID', example: "272c87df-bf82-4012-bc76-f510714abcd3"})
-    @IsString()
-    roomId: string;
-  
     @ApiProperty({ description: '학생 이름', example: "홍길동"  })
     @IsString()
-    student: string;
-  
-    @ApiProperty({ description: '타임스탬프' , example: "2025-05-01T12:37:49.436Z"})
-    @IsString()
-    timeStamp: string;
+    studentName: string;
   }
 
 export class MusicListResDto {
-    @ApiProperty({type: [MusicDto], description: "방 제목을 정해 방을 새로 생성합니다"})
+    @ApiProperty({type: [MusicDto], description: "음악목록"})
     musicList: MusicDto[];
 }
 

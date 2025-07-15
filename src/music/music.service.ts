@@ -3,6 +3,7 @@ import { v4 as uuidv4} from 'uuid'
 import { MusicSQLService } from './music.sql.service';
 import { RedisService } from 'src/redis/redis.service';
 import { RedisStreamService } from 'src/redis/redis-stream.service';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class MusicService {
@@ -118,13 +119,14 @@ export class MusicService {
         );
     }
 
+    //long polling
     async pollMusicStream(roomId: string): Promise<any> {
         const streamKey = `music-stream:${roomId}`;
         const group = `music-group:${roomId}`;
         const consumer = `consumer-${roomId}`;
-        const timeout = 10000
+        const timeout = 3000
         
-        const messages = await this.redisStreamService.readStreamSinceLastId(
+        const messages = await this.redisStreamService.readStream(
             streamKey, group, consumer, timeout
         );
         

@@ -17,7 +17,7 @@ export class RedisStreamService implements OnModuleDestroy{
     console.log('[RedisStreamService] onModuleDestroy: 서비스 종료 중...');
   }
 
-  async readStreamSinceLastId(
+  async readStream(
     streamKey: string,
     group: string,
     consumer: string,
@@ -39,7 +39,7 @@ export class RedisStreamService implements OnModuleDestroy{
 
     while (!this.isDestroyed) {
       try {
-        console.log("!!!!!! 읽기 시도")
+        console.log("xreadgroup시도")
         // xreadgroup시도, 새로운 데이터가 없으면 timeout동안 대기
         const response = await client.xreadgroup(
           'GROUP', group, consumer,
@@ -61,7 +61,7 @@ export class RedisStreamService implements OnModuleDestroy{
             results.push({ id, ...data });
             await client.xack(streamKey, group, id);
             await client.xdel(streamKey, id)
-          }
+        }
         }
 
         break
@@ -71,6 +71,8 @@ export class RedisStreamService implements OnModuleDestroy{
         await new Promise((r) => setTimeout(r, 500)); // 에러 발생 시 while문 재시도
       }
     }
+
+    console.log(results)
 
     return results;
   }
