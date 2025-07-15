@@ -133,24 +133,24 @@ export class MusicService {
         };
     }
 
-    // //sse-stream연결
-    // async createRedisStream(roomId: string): Promise<Observable<any>> {
-    //     const streamKey = `room:${roomId}:stream`;
-    //     const group = `room:${roomId}:group`;
-    //     const getInitialPayload = async () => {
-    //         const musicList = await this.getMusicList(roomId);
-    //         const { roomTitle } = await this.getRoomTitle(roomId);
-    //         return {
-    //             type: 'init-music-list',
-    //             data: { musicList, roomTitle },
-    //         };
-    //     }
+    //sse-stream연결
+    async createRedisStream(roomId: string): Promise<Observable<any>> {
+        const streamKey = `room:${roomId}:stream`;
+        const group = `room:${roomId}:group`;
+        const getInitialPayload = async () => {
+            const musicList = await this.getMusicList(roomId);
+            const { roomTitle } = await this.getRoomTitle(roomId);
+            return {
+                type: 'init-music-list',
+                data: { musicList, roomTitle },
+            };
+        }
 
-    //     return this.redisStreamService.createStreamObservable(
-    //         streamKey,
-    //         group,
-    //         getInitialPayload
-    //     );
-    // }
+        return this.redisStreamService.createStreamObservable(
+            streamKey,
+            group,
+            getInitialPayload
+        );
+    }
 
 }

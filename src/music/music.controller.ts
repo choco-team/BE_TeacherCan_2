@@ -26,16 +26,16 @@ export class MusicController {
     }
 
 
-    // @Sse('/sse')
-    // async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Promise<Observable<any>> {
-    //     const stream = await this.musicService.createRedisStream(roomId);
-    //     // 클라이언트 연결 해제 처리
-    //     const res = (req as any).res;
-    //     res.on('close', () => {
-    //         console.log(`[SSE] Client disconnected from room ${roomId}`);
-    //     });
-    //     return stream;
-    // }
+    @Sse('/sse')
+    async streamMusicList(@Query('roomId') roomId: string, @Req() req: Request): Promise<Observable<any>> {
+        const stream = await this.musicService.createRedisStream(roomId);
+        // 클라이언트 연결 해제 처리
+        const res = (req as any).res;
+        res.on('close', () => {
+            console.log(`[SSE] Client disconnected from room ${roomId}`);
+        });
+        return stream;
+    }
 
     @Post('/room')
     @ApiOperation({summary: '방 생성', description: '음악 추천을 위한 방을 생성합니다'})
