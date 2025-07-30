@@ -3,6 +3,12 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AddMusicInRoomDto, DeleteMusicInRoomDto, RoomTitleDto } from 'src/dto/music.dto';
 import { MusicWebRTCService } from './music-webrtc.service';
 
+interface RoomUser {
+  socketId: string;
+  userId: string;
+  roomId: string;
+}
+
 @ApiTags('/music-webrtc')
 @Controller('/music-webrtc')
 export class MusicWebRTCController {
@@ -86,7 +92,7 @@ export class MusicWebRTCController {
     @Get('/room/users')
     @ApiOperation({summary: '방 사용자 목록', description: '특정 방의 WebRTC 연결된 사용자 목록을 조회합니다'})
     @ApiResponse({description: "방의 연결된 사용자 목록을 받아옵니다"})
-    async getRoomUsers(@Query('roomId') roomId: string) {
+    async getRoomUsers(@Query('roomId') roomId: string): Promise<RoomUser[]> {
         return this.musicWebRTCService.getRoomUsers(roomId);
     }
 

@@ -11,6 +11,12 @@ interface WebRTCMusicData {
   timestamp?: Date;
 }
 
+interface RoomUser {
+  socketId: string;
+  userId: string;
+  roomId: string;
+}
+
 @Injectable()
 export class MusicWebRTCService {
   private readonly logger = new Logger(MusicWebRTCService.name);
@@ -178,7 +184,7 @@ export class MusicWebRTCService {
   /**
    * 방별 WebRTC 사용자 목록
    */
-  getRoomUsers(roomId: string) {
+  getRoomUsers(roomId: string): RoomUser[] {
     const roomInfo = this.webrtcGateway.getRoomInfo(roomId);
     return roomInfo?.users || [];
   }
