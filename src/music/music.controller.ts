@@ -64,7 +64,8 @@ export class MusicController {
     @ApiOperation({summary: '음악목록 가져오기', description: '방의 음악목록울 가져옵니다'})
     @ApiResponse({description: "방의 음악목록울 가져옵니다", type: MusicListResDto})
     async getMusicListByRoomId(@Query('roomId') roomId: string){
-        return await this.musicService.getMusicList(roomId)                
+        const musicList = await this.musicService.getMusicList(roomId) 
+        return {musicList}          
     }
 
 

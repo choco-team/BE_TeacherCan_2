@@ -62,6 +62,43 @@ export class MusicSQLService {
         return responseData;
     }
 
+    async getMusicListAndRoomTitle(roomId: string) {
+        const asd = await this.roomRepository.findOne({where: {id: roomId}});
+        if (!asd) {
+            throw new HttpException('방을 찾을 수 없습니다', HttpStatus.NOT_FOUND);
+        }
+
+        const room = await this.roomRepository
+            .createQueryBuilder('room')
+            .leftJoinAndSelect('room.musics', 'music')
+            .where('room.id = :roomId', { roomId })
+            .select([
+                'room.id',
+                'room.name',
+                'music.id',
+                'music.musicId',
+                'music.title',
+                'music.studentName'
+            ])
+            .getOne();
+        
+        const musicList = await this.getAllMusicInRoom(roomId);
+        const studentList = await this.findStudentInRoom(roomId);
+        
+        const responseData = {
+            roomTitle: room.roomTitle,
+            studentList: studentList,
+            musicList: musicList.map(music => ({
+                musicId: music.musicId,
+                title: music.title,
+                student: music.studentName,
+                timeStamp: music.timeStamp
+            }))
+        };
+        
+        return responseData;
+    }
+
     // 방의 모든 음악 조회 (public으로 변경)
     async getAllMusicInRoom(roomId: string) {
         return await this.musicRepository.find({

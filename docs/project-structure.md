@@ -29,6 +29,7 @@ BE_TeacherCan_2/
 │   │   ├── auth.module.ts
 │   │   └── auth.types.ts
 │   ├── config/                 # 설정 파일들
+│   │   └── constants.ts
 │   ├── db/                     # 데이터베이스 관련
 │   │   ├── AppDataSource.ts    # TypeORM 데이터소스 설정
 │   │   └── entities/           # 엔티티 정의
@@ -56,20 +57,40 @@ BE_TeacherCan_2/
 │   │   ├── music.module.ts
 │   │   └── music.sql.service.ts
 │   ├── redis/                  # Redis 관련 모듈
+│   │   ├── redis.service.ts
+│   │   ├── redis.module.ts
+│   │   ├── redis-stream.service.ts
+│   │   └── redisPubSub.service.ts
 │   ├── services/               # 공통 서비스
 │   │   ├── crypto.service.ts
 │   │   └── crypto.module.ts
-│   ├── sync/                   # 동기화 관련 모듈
 │   ├── decorator/              # 커스텀 데코레이터
+│   │   ├── user.decorator.ts
+│   │   └── roles.decorator.ts
 │   ├── interceptor/            # 인터셉터 (CSRF 등)
+│   │   ├── csrf.interceptor.ts
+│   │   └── cookie.interceptor.ts
 │   └── middleware/             # 미들웨어
+│       └── csrf.middleware.ts
 ├── docs/                       # 문서 디렉토리
 ├── exam/                       # 시험 관련 정적 파일
-├── ssl/                        # SSL 인증서
+│   ├── main.js
+│   └── main.html
+├── nginx/                      # Nginx 설정 파일
+│   ├── default.conf
+│   ├── default-http.conf
+│   ├── default-ssl.conf
+│   └── start.sh
 ├── dist/                       # 빌드 결과물
 ├── test/                       # 테스트 파일
+│   ├── jest-e2e.json
+│   └── app.e2e-spec.ts
 ├── docker-compose.yml          # Docker Compose 설정
 ├── Dockerfile                  # Docker 이미지 빌드
+├── package.json                # 프로젝트 의존성
+├── tsconfig.json               # TypeScript 설정
+├── nest-cli.json              # NestJS CLI 설정
+├── cloudbuild.yaml            # Google Cloud Build 설정
 └── 기타 설정 파일들
 ```
 
@@ -156,7 +177,22 @@ music/
 - 음악 파일 처리
 - 음악 관련 CRUD 작업
 
-### 4. 데이터베이스 엔티티 (db/entities/)
+### 4. Redis 모듈 (redis/)
+```
+redis/
+├── redis.service.ts           # 기본 Redis 서비스
+├── redis.module.ts            # Redis 모듈 정의
+├── redis-stream.service.ts    # Redis Stream 처리
+└── redisPubSub.service.ts     # Redis Pub/Sub 서비스
+```
+
+**주요 기능:**
+- Redis 캐시 및 세션 저장소
+- Redis Stream을 통한 실시간 데이터 처리
+- Pub/Sub 패턴을 통한 메시지 브로드캐스팅
+- ioredis 라이브러리 사용
+
+### 5. 데이터베이스 엔티티 (db/entities/)
 ```
 entities/
 ├── user.entity.ts         # 사용자 정보
@@ -173,6 +209,38 @@ entities/
 - User ↔ Session (일대다)
 - Music ↔ Evaluation (연관 관계)
 
+### 6. 커스텀 데코레이터 (decorator/)
+```
+decorator/
+├── user.decorator.ts      # 사용자 정보 추출 데코레이터
+└── roles.decorator.ts     # 역할 기반 접근 제어 데코레이터
+```
+
+**주요 기능:**
+- 컨트롤러에서 사용자 정보 자동 추출
+- 역할 기반 권한 제어 메타데이터 설정
+
+### 7. 인터셉터 (interceptor/)
+```
+interceptor/
+├── csrf.interceptor.ts    # CSRF 보호 인터셉터
+└── cookie.interceptor.ts  # 쿠키 처리 인터셉터
+```
+
+**주요 기능:**
+- CSRF 토큰 검증 및 보호
+- 쿠키 기반 인증 처리
+
+### 8. 미들웨어 (middleware/)
+```
+middleware/
+└── csrf.middleware.ts     # CSRF 보호 미들웨어
+```
+
+**주요 기능:**
+- CSRF 공격 방지를 위한 미들웨어
+- 요청 검증 및 토큰 처리
+
 ### 5. DTO (Data Transfer Objects)
 ```
 dto/
@@ -187,6 +255,18 @@ dto/
 - API 요청/응답 데이터 구조 정의
 - 데이터 유효성 검증
 - 타입 안전성 보장
+
+### 6. 시험 시스템 (exam/)
+```
+exam/
+├── main.js               # 시험 시스템 메인 로직
+└── main.html             # 시험 시스템 프론트엔드
+```
+
+**주요 기능:**
+- 온라인 시험 시스템
+- 정적 파일 기반 시험 인터페이스
+- JavaScript 기반 시험 로직 처리
 
 ## 🔒 보안 기능
 
@@ -231,6 +311,10 @@ dto/
 - **Google Cloud Build**: 자동 빌드 및 배포
 - **cloudbuild.yaml**: 빌드 파이프라인 정의
 - **Nginx**: 리버스 프록시 설정
+  - **nginx/default.conf**: 기본 설정
+  - **nginx/default-http.conf**: HTTP 설정
+  - **nginx/default-ssl.conf**: SSL 설정
+  - **nginx/start.sh**: Nginx 시작 스크립트
 
 ### SSL/HTTPS
 - **로컬 개발**: 자체 서명 인증서
@@ -284,5 +368,14 @@ npm run lint                # 코드 린팅
 ---
 
 **작성일**: 2025-06-24  
-**버전**: 1.0  
-**작성자**: AI Assistant
+**버전**: 1.1  
+**작성자**: AI Assistant  
+**최종 업데이트**: 2025-01-27  
+**업데이트 내용**: 
+- 실제 폴더 구조와 일치하도록 문서 수정
+- sync 디렉토리 제거 (실제로 존재하지 않음)
+- ssl 디렉토리를 nginx 디렉토리로 변경
+- redis 모듈 상세 구조 추가
+- decorator, interceptor, middleware 상세 설명 추가
+- exam 디렉토리 설명 추가
+- config 디렉토리 내용 추가
