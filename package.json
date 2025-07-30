@@ -30,7 +30,10 @@
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/swagger": "^7.4.2",
     "@nestjs/typeorm": "^11.0.0",
+    "@nestjs/websockets": "^10.0.0",
+    "@nestjs/platform-socket.io": "^10.0.0",
     "@types/express-session": "^1.18.1",
+    "@types/socket.io": "^3.0.2",
     "axios": "^1.8.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -43,6 +46,7 @@
     "passport-kakao": "^1.0.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.7.4",
     "tiktoken": "^1.0.20"
   },
   "devDependencies": {

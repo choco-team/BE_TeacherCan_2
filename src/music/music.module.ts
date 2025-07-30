@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MusicController } from './music.controller';
+import { MusicWebRTCController } from './music-webrtc.controller';
+import { MusicWebRTCGateway } from './music-webrtc.gateway';
+import { MusicWebRTCService } from './music-webrtc.service';
 import { Student } from 'src/db/entities/student.entity';
 import { Music } from 'src/db/entities/music.entity';
 import { Room } from 'src/db/entities/room.entity';
@@ -14,8 +17,21 @@ import { MusicService } from './music.service';
     TypeOrmModule.forFeature([Student, Music, Room, RsaKey]), 
     CryptoModule
   ],
-  providers: [MusicSQLService, MusicService],
-  controllers: [MusicController],
-  exports: [MusicService, MusicSQLService] // 다른 모듈에서 사용할 수 있도록 export
+  providers: [
+    MusicSQLService, 
+    MusicService,
+    MusicWebRTCService,
+    MusicWebRTCGateway
+  ],
+  controllers: [
+    MusicController,
+    MusicWebRTCController
+  ],
+  exports: [
+    MusicService, 
+    MusicSQLService,
+    MusicWebRTCService,
+    MusicWebRTCGateway
+  ]
 })
 export class MusicModule {}
