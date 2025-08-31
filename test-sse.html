@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSE 테스트</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .status {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .events {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 20px;
+        margin: 20px 0;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .event {
+        background: white;
+        padding: 10px;
+        margin: 10px 0;
+        border-left: 4px solid #007bff;
+        border-radius: 3px;
+      }
+      .event-type {
+        font-weight: bold;
+        color: #007bff;
+      }
+      .event-time {
+        color: #6c757d;
+        font-size: 0.9em;
+      }
+      .event-data {
+        margin-top: 5px;
+        white-space: pre-wrap;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .controls {
+        text-align: center;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎵 Music Server SSE 테스트</h1>
+
+      <div class="controls">
+        <button id="connectBtn" onclick="connectSSE()">🔌 SSE 연결</button>
+        <button id="disconnectBtn" onclick="disconnectSSE()" disabled>
+          ❌ 연결 해제
+        </button>
+        <button onclick="clearEvents()">🗑️ 이벤트 지우기</button>
+      </div>
+
+      <div id="status" class="status disconnected">🔴 SSE 연결되지 않음</div>
+
+      <div class="events">
+        <h3>📡 이벤트 로그</h3>
+        <div id="eventsList"></div>
+      </div>
+    </div>
+
+    <script>
+      let eventSource = null;
+      let eventCount = 0;
+
+      function connectSSE() {
+        if (eventSource) {
+          eventSource.close();
+        }
+
+        try {
+          eventSource = new EventSource('http://localhost:8080/sse');
+
+          eventSource.onopen = function (event) {
+            updateStatus('🟢 SSE 연결됨', 'connected');
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            addEvent('연결', 'SSE 연결이 열렸습니다.', event);
+          };
+
+          eventSource.onmessage = function (event) {
+            addEvent('메시지', event.data, event);
+          };
+
+          eventSource.onerror = function (event) {
+            updateStatus('🔴 SSE 연결 오류', 'disconnected');
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            addEvent('오류', 'SSE 연결에 오류가 발생했습니다.', event);
+          };
+        } catch (error) {
+          console.error('SSE 연결 실패:', error);
+          addEvent('오류', 'SSE 연결을 생성할 수 없습니다: ' + error.message);
+        }
+      }
+
+      function disconnectSSE() {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+          updateStatus('🔴 SSE 연결 해제됨', 'disconnected');
+          document.getElementById('connectBtn').disabled = false;
+          document.getElementById('disconnectBtn').disabled = true;
+          addEvent('연결 해제', 'SSE 연결이 수동으로 해제되었습니다.');
+        }
+      }
+
+      function updateStatus(message, className) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${className}`;
+      }
+
+      function addEvent(type, data, event = null) {
+        eventCount++;
+        const eventsList = document.getElementById('eventsList');
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'event';
+
+        const timestamp = new Date().toLocaleTimeString();
+        let displayData = data;
+
+        try {
+          // JSON 데이터인 경우 파싱 시도
+          const parsed = JSON.parse(data);
+          displayData = JSON.stringify(parsed, null, 2);
+        } catch (e) {
+          // JSON이 아닌 경우 그대로 표시
+        }
+
+        eventDiv.innerHTML = `
+                <div class="event-type">${type}</div>
+                <div class="event-time">${timestamp} (이벤트 #${eventCount})</div>
+                <div class="event-data">${displayData}</div>
+            `;
+
+        eventsList.appendChild(eventDiv);
+        eventsList.scrollTop = eventsList.scrollHeight;
+      }
+
+      function clearEvents() {
+        document.getElementById('eventsList').innerHTML = '';
+        eventCount = 0;
+      }
+
+      // 페이지 로드 시 상태 초기화
+      window.onload = function () {
+        updateStatus('🔴 SSE 연결되지 않음', 'disconnected');
+      };
+
+      // 페이지 언로드 시 연결 정리
+      window.onbeforeunload = function () {
+        if (eventSource) {
+          eventSource.close();
+        }
+      };
+    </script>
+  </body>
+</html>
