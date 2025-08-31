@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Request SSE 테스트</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .status {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .events {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 20px;
+        margin: 20px 0;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .event {
+        background: white;
+        padding: 15px;
+        margin: 10px 0;
+        border-left: 4px solid #007bff;
+        border-radius: 3px;
+      }
+      .event-type {
+        font-weight: bold;
+        color: #007bff;
+        margin-bottom: 5px;
+      }
+      .event-time {
+        color: #6c757d;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+      }
+      .event-data {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 3px;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 0.9em;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .controls {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .room-info {
+        background: #e7f3ff;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+        border-left: 4px solid #007bff;
+      }
+      .music-list {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+      }
+      .music-item {
+        background: white;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 3px;
+        border: 1px solid #dee2e6;
+      }
+      .input-group {
+        margin: 15px 0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      input {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        font-size: 14px;
+      }
+      .room-id-input {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎵 Music Request SSE 테스트</h1>
+
+      <div class="input-group">
+        <label for="roomId">Room ID:</label>
+        <input
+          type="text"
+          id="roomId"
+          class="room-id-input"
+          value="81a0852c-196a-4f24-8a86-509348963e43"
+          placeholder="방 ID를 입력하세요"
+        />
+      </div>
+
+      <div class="controls">
+        <button id="connectBtn" onclick="connectSSE()">🔌 SSE 연결</button>
+        <button id="disconnectBtn" onclick="disconnectSSE()" disabled>
+          ❌ 연결 해제
+        </button>
+        <button onclick="clearEvents()">🗑️ 이벤트 지우기</button>
+        <button onclick="addTestMusic()">➕ 테스트 음악 추가</button>
+      </div>
+
+      <div id="status" class="status disconnected">🔴 SSE 연결되지 않음</div>
+
+      <div class="room-info">
+        <h3>🏠 방 정보</h3>
+        <div id="roomInfo">연결 후 방 정보가 표시됩니다.</div>
+      </div>
+
+      <div class="music-list">
+        <h3>🎵 음악 목록</h3>
+        <div id="musicList">연결 후 음악 목록이 표시됩니다.</div>
+      </div>
+
+      <div class="events">
+        <h3>📡 이벤트 로그</h3>
+        <div id="eventsList"></div>
+      </div>
+    </div>
+
+    <script>
+      let eventSource = null;
+      let eventCount = 0;
+      let currentRoomId = '';
+
+      function connectSSE() {
+        if (eventSource) {
+          eventSource.close();
+        }
+
+        currentRoomId = document.getElementById('roomId').value.trim();
+        if (!currentRoomId) {
+          alert('Room ID를 입력해주세요.');
+          return;
+        }
+
+        try {
+          const url = `http://localhost:8080/music-request/sse?roomId=${currentRoomId}`;
+          eventSource = new EventSource(url);
+
+          eventSource.onopen = function (event) {
+            updateStatus('🟢 SSE 연결됨', 'connected');
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            addEvent(
+              '연결',
+              `Room ${currentRoomId}에 SSE 연결이 열렸습니다.`,
+              event,
+            );
+          };
+
+          eventSource.onmessage = function (event) {
+            addEvent('메시지', event.data, event);
+            updateRoomDisplay(event.data);
+          };
+
+          eventSource.onerror = function (event) {
+            updateStatus('🔴 SSE 연결 오류', 'disconnected');
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            addEvent('오류', 'SSE 연결에 오류가 발생했습니다.', event);
+          };
+        } catch (error) {
+          console.error('SSE 연결 실패:', error);
+          addEvent('오류', 'SSE 연결을 생성할 수 없습니다: ' + error.message);
+        }
+      }
+
+      function disconnectSSE() {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+          updateStatus('🔴 SSE 연결 해제됨', 'disconnected');
+          document.getElementById('connectBtn').disabled = false;
+          document.getElementById('disconnectBtn').disabled = true;
+          addEvent('연결 해제', 'SSE 연결이 수동으로 해제되었습니다.');
+        }
+      }
+
+      function updateStatus(message, className) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${className}`;
+      }
+
+      function addEvent(type, data, event = null) {
+        eventCount++;
+        const eventsList = document.getElementById('eventsList');
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'event';
+
+        const timestamp = new Date().toLocaleTimeString();
+        let displayData = data;
+
+        try {
+          // JSON 데이터인 경우 파싱 시도
+          const parsed = JSON.parse(data);
+          displayData = JSON.stringify(parsed, null, 2);
+        } catch (e) {
+          // JSON이 아닌 경우 그대로 표시
+        }
+
+        eventDiv.innerHTML = `
+          <div class="event-type">${type}</div>
+          <div class="event-time">${timestamp} (이벤트 #${eventCount})</div>
+          <div class="event-data">${displayData}</div>
+        `;
+
+        eventsList.appendChild(eventDiv);
+        eventsList.scrollTop = eventsList.scrollHeight;
+      }
+
+      function updateRoomDisplay(data) {
+        try {
+          const parsed = JSON.parse(data);
+
+          if (parsed.type === 'room-update') {
+            // 방 정보 업데이트 이벤트
+            document.getElementById('roomInfo').innerHTML = `
+              <strong>방 ID:</strong> ${parsed.roomId}<br>
+              <strong>방 제목:</strong> ${parsed.roomTitle}<br>
+              <strong>음악 수:</strong> ${parsed.musicList.length}곡<br>
+              <strong>학생 수:</strong> ${parsed.studentList.length}명<br>
+              <strong>마지막 업데이트:</strong> ${new Date(parsed.timestamp).toLocaleString()}
+            `;
+
+            // 음악 목록 업데이트
+            if (parsed.musicList && parsed.musicList.length > 0) {
+              const musicListHtml = parsed.musicList
+                .map(
+                  (music) => `
+                  <div class="music-item">
+                    <strong>${music.title}</strong> - ${music.artist || 'Unknown Artist'}<br>
+                    <small>요청자: ${music.requestedBy || music.studentName || 'Unknown'}</small>
+                  </div>
+                `,
+                )
+                .join('');
+              document.getElementById('musicList').innerHTML = musicListHtml;
+            } else {
+              document.getElementById('musicList').innerHTML =
+                '음악이 없습니다.';
+            }
+
+            addEvent(
+              '방 정보 업데이트',
+              `방 ${parsed.roomId}의 정보를 받았습니다. (${parsed.musicList.length}곡)`,
+            );
+          } else if (parsed.type === 'new-music') {
+            // 새 음악 추가 이벤트
+            addEvent(
+              '새 음악',
+              `새 음악이 추가되었습니다: ${parsed.musicList.title || parsed.music.title}`,
+            );
+
+            // 방 정보 새로고침
+            setTimeout(() => {
+              if (eventSource && eventSource.readyState === EventSource.OPEN) {
+                addEvent('정보', '방 정보를 새로고침합니다...');
+              }
+            }, 1000);
+          } else if (parsed.type === 'deleted-music') {
+            // 음악 제거 이벤트
+            addEvent('음악 제거', `음악이 제거되었습니다: ${parsed.musicId}`);
+          } else if (parsed.type === 'ping') {
+            // ping 이벤트
+            addEvent(
+              'Ping',
+              `연결 상태 확인 - Room ${parsed.roomId} (${new Date(parsed.timestamp).toLocaleTimeString()})`,
+            );
+          } else if (parsed.type === 'error') {
+            // 에러 이벤트
+            addEvent('에러', parsed.message);
+          }
+        } catch (e) {
+          console.error('데이터 파싱 오류:', e);
+        }
+      }
+
+      function clearEvents() {
+        document.getElementById('eventsList').innerHTML = '';
+        eventCount = 0;
+      }
+
+      async function addTestMusic() {
+        if (!currentRoomId) {
+          alert('먼저 SSE에 연결해주세요.');
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `http://localhost:8080/music-request/room/${currentRoomId}/music`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                musicId: `test_${Date.now()}`,
+                title: `테스트 음악 ${Date.now()}`,
+                student: '테스트 학생',
+              }),
+            },
+          );
+
+          if (response.ok) {
+            addEvent('테스트', '테스트 음악이 추가되었습니다.');
+          } else {
+            addEvent('오류', '테스트 음악 추가 실패');
+          }
+        } catch (error) {
+          addEvent('오류', '테스트 음악 추가 중 오류: ' + error.message);
+        }
+      }
+
+      // 페이지 로드 시 상태 초기화
+      window.onload = function () {
+        updateStatus('🔴 SSE 연결되지 않음', 'disconnected');
+      };
+
+      // 페이지 언로드 시 연결 정리
+      window.onbeforeunload = function () {
+        if (eventSource) {
+          eventSource.close();
+        }
+      };
+    </script>
+  </body>
+</html>
