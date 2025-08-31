@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MusicSQLService } from './music.sql.service';
-import { CryptoService } from 'src/services/crypto.service';
+import { CryptoService } from '../services/crypto.service';
 import { Subject, Observable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
