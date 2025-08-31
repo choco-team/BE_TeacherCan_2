@@ -22,9 +22,16 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'https://www.teachercan.com',
+      'https://teachercan.com',
+      'https://be-teacher-can-2-cr55yn82i-teachercans-projects.vercel.app',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],
   });
 
   const port = process.env.PORT ?? 8080;
