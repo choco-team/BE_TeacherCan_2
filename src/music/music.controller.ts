@@ -53,6 +53,7 @@ export class MusicController {
                   type: 'new-music',
                   roomId: event.roomId,
                   musicList: event.musicList,
+                  timestamp: event.timestamp,
                 },
                 type: 'new-music',
                 id: Date.now().toString(),
@@ -65,6 +66,7 @@ export class MusicController {
                 data: {
                   type: 'deleted-music',
                   id: event.id,
+                  timestamp: event.timestamp,
                 },
                 type: 'deleted-music',
                 id: Date.now().toString(),
@@ -73,7 +75,18 @@ export class MusicController {
           }
         });
 
-      // 주기적으로 ping 이벤트 전송 (연결 유지)
+      // 연결 시간 제한 설정 (4분 후 자동 연결 해제)
+      const connectionTimeout = setTimeout(
+        () => {
+          console.log(
+            `[SSE] Connection timeout for room ${roomId} - Vercel timeout 방지`,
+          );
+          subscriber.complete();
+        },
+        4 * 60 * 1000,
+      ); // 4분
+
+      // ping 이벤트 간격 단축 (1분마다)
       const pingInterval = setInterval(() => {
         subscriber.next({
           data: {
@@ -84,10 +97,11 @@ export class MusicController {
           type: 'ping',
           id: Date.now().toString(),
         });
-      }, 60000 * 5); // 5분마다 ping
+      }, 60000); // 1분마다
 
       // 연결 해제 시 정리
       return () => {
+        clearTimeout(connectionTimeout);
         clearInterval(pingInterval);
         globalEventSubscription.unsubscribe();
         console.log(`[SSE] Stream closed for room ${roomId}`);
